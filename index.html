@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="screen-orientation" content="landscape">
-    <title>Stickman Battle: UI Final Polish v5.4</title>
+    <title>Stickman Battle: Fortress Fix v5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -55,22 +55,22 @@
         .gold-display { position: absolute; top: 60px; left: 15px; font-size: 20px; color: #fbbf24; font-weight: bold; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; border: 1px solid #fbbf24; }
         .income-text { position: absolute; color: #fbbf24; font-weight: bold; font-size: 18px; pointer-events: none; animation: floatUp 1s forwards; text-shadow: 1px 1px 0 #000; }
         
-        /* SURRENDER BUTTON (UPDATED) */
+        /* SURRENDER BUTTON */
         #btn-surrender {
             position: absolute; 
-            top: 110px; /* Moved below gold display */
+            top: 110px; 
             left: 20px;
             width: 40px; height: 40px;
             background: rgba(185, 28, 28, 0.8); 
             color: white; 
             font-size: 20px; 
-            display: none; /* Shown via JS */
+            display: none; 
             align-items: center; justify-content: center;
             border-radius: 50%; 
             border: 2px solid #fca5a5;
             cursor: pointer; 
-            pointer-events: auto !important; /* Force clickable */
-            z-index: 150; /* Above everything */
+            pointer-events: auto !important; 
+            z-index: 150; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             transition: transform 0.1s;
         }
@@ -98,7 +98,6 @@
             .mode-title { font-size: 1.8rem; }
             .mode-desc { font-size: 0.9rem; }
             .end-title { font-size: 2.5rem; }
-            /* Mobile position for Surrender */
             #btn-surrender { top: 80px; left: 15px; width: 32px; height: 32px; font-size: 16px; }
         }
 
@@ -137,7 +136,7 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
-    <div id="version-tag">ver 5.4 (UI Polish)</div>
+    <div id="version-tag">ver 5.5 (Fortress Fix)</div>
 
     <!-- Rotate Overlay -->
     <div id="rotate-overlay">
@@ -195,7 +194,7 @@
     <div id="lobby-modal">
         <div class="modal-content">
             <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
-            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V5.4</p>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V5.5</p>
             
             <div id="menu-start">
                 <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
@@ -269,15 +268,15 @@
         const TICK_RATE = 1000 / 60; 
 
         const MODIFIERS = {
-            NORMAL: { name: "NORMAL BATTLE", desc: "Pertarungan standar.", mineDist: 350, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#fff" },
-            GOLD_RUSH: { name: "🔥 GOLD RUSH", desc: "Tambang dekat, pertarungan cepat!", mineDist: 200, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#facc15" },
-            DROUGHT: { name: "🌵 DROUGHT", desc: "Tambang jauh, hati-hati disergap.", mineDist: 600, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#ea580c" },
-            FORTIFIED: { name: "🏰 FORTIFIED", desc: "Tower menembak 2x lebih cepat.", mineDist: 350, towerRate: 40, castleHp: 3000, incomeMult: 1, color: "#60a5fa" },
-            DOUBLE_TROUBLE: { name: "💰 DOUBLE INCOME", desc: "Mining menghasilkan 2x Emas!", mineDist: 350, towerRate: 80, castleHp: 4000, incomeMult: 2, color: "#4ade80" },
-            SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, castleHp: 500, incomeMult: 1, color: "#ef4444" }
+            // TOWER RANGE UPGRADE FOR FORTIFIED (600) vs Default (400)
+            NORMAL: { name: "NORMAL BATTLE", desc: "Pertarungan standar.", mineDist: 350, towerRate: 80, towerRange: 400, castleHp: 3000, incomeMult: 1, color: "#fff" },
+            GOLD_RUSH: { name: "🔥 GOLD RUSH", desc: "Tambang dekat, pertarungan cepat!", mineDist: 200, towerRate: 80, towerRange: 400, castleHp: 3000, incomeMult: 1, color: "#facc15" },
+            DROUGHT: { name: "🌵 DROUGHT", desc: "Tambang jauh, hati-hati disergap.", mineDist: 600, towerRate: 80, towerRange: 400, castleHp: 3000, incomeMult: 1, color: "#ea580c" },
+            FORTIFIED: { name: "🏰 FORTIFIED", desc: "Tower kuat dan menembak jauh!", mineDist: 350, towerRate: 40, towerRange: 600, castleHp: 3000, incomeMult: 1, color: "#60a5fa" },
+            DOUBLE_TROUBLE: { name: "💰 DOUBLE INCOME", desc: "Mining menghasilkan 2x Emas!", mineDist: 350, towerRate: 80, towerRange: 400, castleHp: 4000, incomeMult: 2, color: "#4ade80" },
+            SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, towerRange: 400, castleHp: 500, incomeMult: 1, color: "#ef4444" }
         };
         
-        // --- CHILL MODE UNITS ---
         const UNITS = {
             miner: { hp: 50, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 },
             sword: { hp: 80, dmg: 20, range: 45, speed: 1.5, cost: 125, color: '#fff', attackSpeed: 60, width: 20 },
@@ -286,7 +285,6 @@
             wizard: { hp: 150, dmg: 60, range: 300, speed: 1.0, cost: 350, color: '#9333ea', attackSpeed: 120, width: 20, isAoE: true }
         };
 
-        const CASTLE_RANGE = 400; 
         const CASTLE_DMG = 25; 
 
         class SeededRNG {
@@ -352,6 +350,7 @@
                 this.mineLeft = { x: dist, y: GROUND_Y, w: 80, h: 60, team: 'host' };
                 this.mineRight = { x: CANVAS_WIDTH - dist, y: GROUND_Y, w: 80, h: 60, team: 'guest' };
                 this.gameOver = false;
+                this.isSinglePlayer = false; // Reset SP flag
                 this.frameCount = 0;
                 document.getElementById('end-game-screen').style.display = 'none';
                 document.getElementById('controls-panel').style.display = 'none';
@@ -528,9 +527,12 @@
 
             updateCastleDefense(castle, enemyTeam) {
                 castle.fireTimer++;
+                // USE DYNAMIC RANGE FROM MODIFIER
+                const range = this.currentModifier.towerRange || 400; // Default to 400 if undefined
                 const fireRate = this.currentModifier.towerRate * 2; 
+
                 if (castle.fireTimer >= fireRate) { 
-                    let closest = null, minDist = CASTLE_RANGE;
+                    let closest = null, minDist = range;
                     this.units.forEach(u => { if (u.team === enemyTeam && !u.dead) { const dist = Math.abs(u.x - castle.x); if (dist < minDist) { minDist = dist; closest = u; } } });
                     if (closest) { castle.fireTimer = 0; this.fireArrow(castle.x, GROUND_Y - 200, closest, CASTLE_DMG, castle.team); }
                 }
@@ -590,7 +592,16 @@
 
             checkDeath(unit) { if (unit.hp <= 0) { unit.dead = true; this.createParticles(unit.x, GROUND_Y - 30, unit.stats.color, 15); } }
             createParticles(x, y, color, count) { for(let i=0; i<count; i++) this.particles.push({ x: x, y: y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 20+Math.random()*10, color: color }); }
-            triggerWin(winner) { this.gameOver = true; if (this.isSinglePlayer) this.showEndScreen(winner); else lobby.reportWin(winner); }
+            
+            triggerWin(winner) { 
+                this.gameOver = true; 
+                if (this.isSinglePlayer) {
+                    this.showEndScreen(winner);
+                } else {
+                    lobby.reportWin(winner);
+                }
+            }
+            
             showEndScreen(winner) {
                 this.gameOver = true; document.getElementById('end-game-screen').style.display = 'flex';
                 document.getElementById('end-title').innerText = (winner === playerRole) ? "VICTORY" : "DEFEAT";
@@ -749,7 +760,7 @@
                     if (this.gold < UNITS[type].cost || !this.inputEnabled) btn.classList.add('disabled'); else btn.classList.remove('disabled');
                 });
             }
-        }
+        } // END CLASS StickmanGame
 
         const game = new StickmanGame();
         window.game = game;
@@ -832,10 +843,19 @@
             }
 
             surrender() {
-                if (!currentGameId || game.gameOver) return;
-                const enemy = playerRole === 'host' ? 'guest' : 'host';
+                if (game.gameOver) return;
+                
+                // Allow surrender in single player or if game is active in MP
+                if (!game.isSinglePlayer && !currentGameId) return;
+
                 if (confirm("Yakin ingin menyerah?")) {
-                    this.reportWin(enemy);
+                    if (game.isSinglePlayer) {
+                        // In SP, player is always host. So enemy is guest.
+                        game.triggerWin('guest');
+                    } else {
+                        const enemy = playerRole === 'host' ? 'guest' : 'host';
+                        this.reportWin(enemy);
+                    }
                 }
             }
 
