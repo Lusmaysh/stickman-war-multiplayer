@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="screen-orientation" content="landscape">
+    <title>Stickman Battle: Tactical v5.3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        .interactive { pointer-events: auto; }
+        #version-tag { position: absolute; bottom: 5px; right: 10px; font-size: 10px; color: #6b7280; font-family: monospace; pointer-events: none; z-index: 50; opacity: 0.5; }
+        
+        /* HUD Style */
+        .hud-top { display: flex; justify-content: space-between; padding: 10px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); align-items: flex-start; }
+        .hud-side { width: 35%; display: flex; flex-direction: column; }
+        .hud-right { align-items: flex-end; }
+        .bar-container { width: 100%; height: 16px; background: #333; border: 2px solid #555; border-radius: 8px; position: relative; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .hp-bar { height: 100%; transition: width 0.2s; }
+        .p1-hp { background: linear-gradient(90deg, #2563eb, #60a5fa); width: 100%; }
+        .p2-hp { background: linear-gradient(90deg, #dc2626, #f87171); width: 100%; }
+        .team-badge { font-size: 11px; font-weight: bold; margin-bottom: 2px; text-shadow: 1px 1px 2px black; text-transform: uppercase; letter-spacing: 1px; }
+        
+        #modifier-badge { background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 15px; border: 1px solid #fff; text-align: center; font-size: 12px; color: #fff; font-weight: bold; margin-top: -5px; display: none; }
+        
+        /* Controls */
+        .controls { display: flex; justify-content: center; gap: 4px; padding: 5px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding-bottom: 10px; }
+        .unit-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; background: #2d3748; border: 2px solid #4a5568; border-radius: 8px; cursor: pointer; position: relative; transition: all 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .unit-btn:active { transform: scale(0.95); border-color: #fbbf24; }
+        .unit-btn.disabled, .unit-btn.locked { opacity: 0.4; filter: grayscale(1); cursor: not-allowed; transform: none; }
+        #btn-miner { border-color: #f59e0b; background: #451a03; }
+        #btn-wizard { border-color: #9333ea; background: #3b0764; }
+        .unit-cost { font-size: 9px; color: #fbbf24; margin-top: 2px; font-weight: bold; }
+        .unit-icon { font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
+        .unit-name { font-size: 9px; color: #d1d5db; margin-top: -2px; }
+        .unit-key { position: absolute; top: 2px; left: 3px; font-size: 8px; color: #9ca3af; font-weight: bold; }
+        
+        /* Modal & Popups */
+        #lobby-modal, #end-game-screen, #loading-overlay, #gamemode-popup, #rotate-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(5px); }
+        #lobby-modal { background: rgba(0,0,0,0.95); }
+        #end-game-screen { background: rgba(0,0,0,0.85); display: none; flex-direction: column; z-index: 90; }
+        #loading-overlay { background: rgba(0,0,0,0.7); display: none; z-index: 101; }
+        #gamemode-popup { display: none; background: rgba(0,0,0,0.4); pointer-events: none; flex-direction: column; animation: fadeOut 0.5s ease-in 2.5s forwards; }
+        
+        .modal-content { background: #1f2937; padding: 1.5rem; border-radius: 1rem; text-align: center; max-width: 90%; width: 400px; border: 1px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        .mode-title { font-size: 2.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px currentColor; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .mode-desc { font-size: 1.2rem; color: #e5e7eb; margin-top: 8px; text-shadow: 2px 2px 4px black; }
+        .end-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        .gold-display { position: absolute; top: 60px; left: 15px; font-size: 20px; color: #fbbf24; font-weight: bold; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; border: 1px solid #fbbf24; }
+        .income-text { position: absolute; color: #fbbf24; font-weight: bold; font-size: 18px; pointer-events: none; animation: floatUp 1s forwards; text-shadow: 1px 1px 0 #000; }
+        
+        /* SURRENDER BUTTON */
+        #btn-surrender {
+            position: absolute; top: 15px; left: 15px;
+            background: #7f1d1d; color: #fca5a5; font-size: 10px; font-weight: bold;
+            padding: 5px 10px; border-radius: 5px; border: 1px solid #ef4444;
+            cursor: pointer; pointer-events: auto; display: none; /* Shown via JS when playing */
+        }
+        #btn-surrender:hover { background: #b91c1c; }
+
+        /* --- MOBILE RESPONSIVE TWEAKS --- */
+        @media (max-height: 500px) {
+            .hud-top { padding: 5px 10px; }
+            .bar-container { height: 10px; border-width: 1px; }
+            .team-badge { font-size: 9px; margin-bottom: 1px; }
+            .gold-display { top: 40px; left: 10px; font-size: 14px; padding: 2px 8px; border-width: 1px; }
+            #modifier-badge { font-size: 10px; padding: 2px 8px; margin-top: 0; }
+            .vs-text { font-size: 1rem !important; }
+            .controls { padding: 2px; padding-bottom: 5px; gap: 3px; }
+            .unit-btn { width: 45px; height: 45px; border-radius: 6px; border-width: 1px; }
+            .unit-icon { font-size: 16px; margin-top: -2px; }
+            .unit-name { display: none; } 
+            .unit-cost { font-size: 8px; margin-top: -1px; }
+            .unit-key { display: none; }
+            .modal-content { padding: 1rem; width: 350px; }
+            .text-4xl { font-size: 1.5rem; }
+            .p-4 { padding: 0.5rem; }
+            .mb-6 { margin-bottom: 0.5rem; }
+            .text-2xl { font-size: 1.2rem; }
+            .mode-title { font-size: 1.8rem; }
+            .mode-desc { font-size: 0.9rem; }
+            .end-title { font-size: 2.5rem; }
+            #btn-surrender { top: 10px; left: 10px; padding: 3px 6px; font-size: 9px; }
+        }
+
+        #rotate-overlay { 
+            background: #000; z-index: 9999; display: none; flex-direction: column; text-align: center; color: white;
+        }
+        .rotate-icon { font-size: 4rem; animation: rotatePhone 2s infinite; margin-bottom: 20px; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 25% { transform: rotate(-90deg); } 50% { transform: rotate(-90deg); } 75% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
+        @media screen and (orientation: portrait) {
+            #rotate-overlay { display: flex; }
+            #ui-layer, #lobby-modal { display: none !important; }
+        }
+        
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+
+        #room-list-container { margin-top: 10px; max-height: 180px; overflow-y: auto; background: #111827; border-radius: 8px; border: 1px solid #374151; text-align: left; }
+        .room-item { padding: 8px 12px; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .room-item:hover { background: #1f2937; }
+        .room-item:last-child { border-bottom: none; }
+        .room-info { display: flex; flex-direction: column; }
+        .room-id { font-family: monospace; color: #fbbf24; font-weight: bold; font-size: 1rem; }
+        .room-status { font-size: 0.7rem; color: #9ca3af; }
+        .btn-join { padding: 4px 10px; font-size: 0.8rem; margin: 0; width: auto; background: #059669; color: white; border-radius: 4px; cursor: pointer; }
+        .btn-join:hover { background: #047857; }
+        .live-dot { height: 6px; width: 6px; background-color: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px #22c55e; animation: pulse 2s infinite; margin-right: 5px; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 8px; font-size: 0.9rem; transition: background 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #6b7280; color: #d1d5db; }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="version-tag">ver 5.3 (Tactical)</div>
+
+    <!-- Rotate Overlay -->
+    <div id="rotate-overlay">
+        <div class="rotate-icon">📱</div>
+        <h2 class="text-2xl font-bold">PUTAR HP ANDA</h2>
+        <p class="text-gray-400 mt-2">Game ini dimainkan dalam mode Landscape</p>
+    </div>
+
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        <!-- Surrender Button (Hidden by default) -->
+        <button id="btn-surrender" onclick="lobby.surrender()">🏳️ MENYERAH</button>
+
+        <div class="hud-top">
+            <div class="hud-side">
+                <div id="p1-badge" class="team-badge text-blue-400">BLUE TEAM</div>
+                <div class="bar-container"><div id="p1-hp-bar" class="hp-bar p1-hp"></div></div>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div class="vs-text" style="font-weight:900; font-size:1.5rem; text-shadow: 2px 2px 4px #000;">VS</div>
+                <div id="modifier-badge"></div>
+            </div>
+
+            <div class="hud-side hud-right">
+                <div id="p2-badge" class="team-badge text-red-400">RED TEAM</div>
+                <div class="bar-container"><div id="p2-hp-bar" class="hp-bar p2-hp"></div></div>
+            </div>
+        </div>
+
+        <div class="gold-display"><span>💰</span> <span id="gold-count">0</span></div>
+        <div id="income-container"></div>
+
+        <div class="controls interactive" id="controls-panel" style="display:none;">
+            <button class="unit-btn" onclick="game.trySpawn('miner')" id="btn-miner"><span class="unit-key">1</span><span class="unit-icon">⛏️</span><span class="unit-name">Miner</span><span class="unit-cost">100 G</span></button>
+            <div style="width: 5px;"></div>
+            <button class="unit-btn" onclick="game.trySpawn('sword')" id="btn-sword"><span class="unit-key">2</span><span class="unit-icon">⚔️</span><span class="unit-name">Sword</span><span class="unit-cost">125 G</span></button>
+            <button class="unit-btn" onclick="game.trySpawn('archer')" id="btn-archer"><span class="unit-key">3</span><span class="unit-icon">🏹</span><span class="unit-name">Archer</span><span class="unit-cost">200 G</span></button>
+             <button class="unit-btn" onclick="game.trySpawn('spear')" id="btn-spear"><span class="unit-key">4</span><span class="unit-icon">🛡️</span><span class="unit-name">Spear</span><span class="unit-cost">250 G</span></button>
+            <button class="unit-btn" onclick="game.trySpawn('wizard')" id="btn-wizard"><span class="unit-key">5</span><span class="unit-icon">🧙‍♂️</span><span class="unit-name">Wizard</span><span class="unit-cost">350 G</span></button>
+        </div>
+    </div>
+
+    <div id="gamemode-popup">
+        <h1 id="popup-title" class="mode-title">NORMAL BATTLE</h1>
+        <p id="popup-desc" class="mode-desc">Standard Rules</p>
+    </div>
+
+    <div id="end-game-screen">
+        <h1 id="end-title" class="end-title">VICTORY</h1>
+        <button class="btn btn-primary" style="width: 200px;" onclick="lobby.resetToMenu()">Kembali ke Menu</button>
+    </div>
+
+    <!-- Lobby Modal -->
+    <div id="lobby-modal">
+        <div class="modal-content">
+            <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V5.3</p>
+            
+            <div id="menu-start">
+                <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
+                <button class="btn btn-outline" onclick="lobby.startSinglePlayer()">🤖 Single Player (vs AI)</button>
+                <button class="btn" style="background:#4b5563; color:white; margin-top:10px;" onclick="lobby.toggleFullscreen()">📱 Layar Penuh (Toggle)</button>
+                
+                <div class="mt-4 mb-1 flex justify-between items-end">
+                    <span class="text-gray-300 font-bold text-sm flex items-center"><div class="live-dot"></div> ROOM LIST</span>
+                    <span class="text-xs text-blue-400 cursor-pointer hover:text-white" onclick="lobby.refreshRooms()">🔄 Force Refresh</span>
+                </div>
+                <div id="room-list-container">
+                    <div class="p-4 text-center text-gray-500 text-sm">Menghubungkan ke server...</div>
+                </div>
+            </div>
+
+            <div id="menu-waiting" style="display:none;">
+                <p class="mb-4 text-gray-300">Menunggu lawan...</p>
+                <div class="bg-black p-4 rounded-lg mb-4 select-all font-mono text-2xl border border-gray-600 text-yellow-400 text-center" id="game-id-display">????</div>
+                <p class="text-xs text-gray-500 mb-6">Room ID Anda (Bagikan atau tunggu di Lobby)</p>
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mx-auto mb-6"></div>
+                <button class="btn btn-danger" onclick="lobby.cancelHost()">Batal & Kembali</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+            <div class="text-xl font-bold">Menghubungkan...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, serverTimestamp, query, orderBy, getDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDmer19KTaijOz3bTdknEEs5dqwKNt6HQg",
+            authDomain: "masjid-pekalongan.firebaseapp.com",
+            projectId: "masjid-pekalongan",
+            storageBucket: "masjid-pekalongan.firebasestorage.app",
+            messagingSenderId: "619031365600",
+            appId: "1:619031365600:web:1683463ce0947a8d2e4d85",
+            measurementId: "G-ER61DHXXQ9"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'stickman-battle-v4';
+        
+        let app, auth, db;
+        let isFirebaseAvailable = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            isFirebaseAvailable = true;
+            console.log("Firebase Connected via Project: " + firebaseConfig.projectId);
+        } catch (e) { 
+            console.error("Firebase Error:", e);
+            if (!window.location.host.includes('googleusercontent')) alert("Koneksi Database Gagal. Cek internet/config.");
+        }
+        
+        let currentGameId = null;
+        let playerRole = null; 
+        let lastModifierKey = null; 
+
+        // --- CONSTANTS ---
+        const CANVAS_WIDTH = 1280;
+        const CANVAS_HEIGHT = 720;
+        const GROUND_Y = 600; 
+        const TICK_RATE = 1000 / 60; 
+
+        const MODIFIERS = {
+            NORMAL: { name: "NORMAL BATTLE", desc: "Pertarungan standar.", mineDist: 350, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#fff" },
+            GOLD_RUSH: { name: "🔥 GOLD RUSH", desc: "Tambang dekat, pertarungan cepat!", mineDist: 200, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#facc15" },
+            DROUGHT: { name: "🌵 DROUGHT", desc: "Tambang jauh, hati-hati disergap.", mineDist: 600, towerRate: 80, castleHp: 3000, incomeMult: 1, color: "#ea580c" },
+            FORTIFIED: { name: "🏰 FORTIFIED", desc: "Tower menembak 2x lebih cepat.", mineDist: 350, towerRate: 40, castleHp: 3000, incomeMult: 1, color: "#60a5fa" },
+            DOUBLE_TROUBLE: { name: "💰 DOUBLE INCOME", desc: "Mining menghasilkan 2x Emas!", mineDist: 350, towerRate: 80, castleHp: 4000, incomeMult: 2, color: "#4ade80" },
+            SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, castleHp: 500, incomeMult: 1, color: "#ef4444" }
+        };
+        
+        // --- CHILL MODE UNITS ---
+        const UNITS = {
+            miner: { hp: 50, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 },
+            sword: { hp: 80, dmg: 20, range: 45, speed: 1.5, cost: 125, color: '#fff', attackSpeed: 60, width: 20 },
+            spear: { hp: 500, dmg: 18, range: 90, speed: 1.0, cost: 250, color: '#fbbf24', attackSpeed: 80, width: 25 },
+            archer: { hp: 70, dmg: 25, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true },
+            wizard: { hp: 150, dmg: 60, range: 300, speed: 1.0, cost: 350, color: '#9333ea', attackSpeed: 120, width: 20, isAoE: true }
+        };
+
+        const CASTLE_RANGE = 400; 
+        const CASTLE_DMG = 25; 
+
+        class SeededRNG {
+            constructor(seed) { this.seed = seed; }
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+            range(min, max) { return min + this.next() * (max - min); }
+        }
+
+        class StickmanGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.clouds = [];
+                for(let i=0; i<5; i++) this.clouds.push({ x: Math.random()*CANVAS_WIDTH, y: Math.random()*200, speed: 0.1+Math.random()*0.2, size: 0.5+Math.random()*0.5 });
+                this.dayTime = 0;
+                this.cycleDuration = 3600;
+                this.stars = [];
+                for(let i=0; i<100; i++) this.stars.push({ x: Math.random()*CANVAS_WIDTH, y: Math.random()*(GROUND_Y-50), size: Math.random()*2, blink: 0.05 + Math.random()*0.1, alpha: Math.random() });
+                this.currentModifier = MODIFIERS.NORMAL; 
+                this.inputEnabled = false; 
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                
+                this.rng = new SeededRNG(123); 
+                this.accumulator = 0;
+                this.reset();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.scaleX = this.canvas.width / CANVAS_WIDTH;
+                this.scaleY = this.canvas.height / CANVAS_HEIGHT;
+            }
+
+            setModifier(modKey, seed) {
+                if (MODIFIERS[modKey]) {
+                    this.currentModifier = MODIFIERS[modKey];
+                    if (seed) this.rng = new SeededRNG(seed); 
+                    this.reset();
+                }
+            }
+
+            reset() {
+                this.units = [];
+                this.projectiles = [];
+                this.particles = [];
+                this.spells = []; 
+                this.lastTime = 0;
+                this.accumulator = 0;
+                this.gold = 0;
+                this.aiGold = 0;
+                this.dayTime = 0;
+                this.pendingSpawns = []; 
+                
+                const hp = this.currentModifier.castleHp;
+                this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140 };
+                this.castleRight = { x: CANVAS_WIDTH - 120, hp: hp, maxHp: hp, team: 'guest', fireTimer: 0, w: 80, h: 140 };
+                const dist = this.currentModifier.mineDist;
+                this.mineLeft = { x: dist, y: GROUND_Y, w: 80, h: 60, team: 'host' };
+                this.mineRight = { x: CANVAS_WIDTH - dist, y: GROUND_Y, w: 80, h: 60, team: 'guest' };
+                this.gameOver = false;
+                this.frameCount = 0;
+                document.getElementById('end-game-screen').style.display = 'none';
+                document.getElementById('controls-panel').style.display = 'none';
+                document.getElementById('income-container').innerHTML = '';
+                document.getElementById('btn-surrender').style.display = 'none';
+            }
+
+            start() {
+                this.reset(); 
+                this.gold = 200; this.aiGold = 200; 
+                this.inputEnabled = false; 
+                document.getElementById('controls-panel').style.display = 'flex';
+                this.updateUI(); 
+                this.showStartPopup();
+                const badge = document.getElementById('modifier-badge');
+                badge.style.display = 'block';
+                badge.innerText = this.currentModifier.name;
+                badge.style.borderColor = this.currentModifier.color;
+                badge.style.color = "#fff";
+                badge.style.textShadow = `0 0 10px ${this.currentModifier.color}`;
+                setTimeout(() => { 
+                    this.inputEnabled = true; 
+                    this.updateUI(); 
+                    document.getElementById('btn-surrender').style.display = 'block';
+                }, 3000);
+                
+                const p1Label = document.getElementById('p1-badge');
+                const p2Label = document.getElementById('p2-badge');
+                if (playerRole === 'host') {
+                    p1Label.innerText = "🔵 YOU (HOST)"; p1Label.style.color = "#60a5fa";
+                    p2Label.innerText = "🔴 ENEMY"; p2Label.style.color = "#f87171";
+                } else {
+                    p1Label.innerText = "🔵 ENEMY"; p1Label.style.color = "#60a5fa";
+                    p2Label.innerText = "🔴 YOU (GUEST)"; p2Label.style.color = "#f87171";
+                }
+
+                this.loop(0);
+            }
+
+            showStartPopup() {
+                const popup = document.getElementById('gamemode-popup');
+                document.getElementById('popup-title').innerText = this.currentModifier.name;
+                document.getElementById('popup-title').style.color = this.currentModifier.color;
+                document.getElementById('popup-desc').innerText = this.currentModifier.desc;
+                popup.style.display = 'flex';
+                popup.style.animation = 'none';
+                popup.offsetHeight; 
+                popup.style.animation = 'fadeOut 0.5s ease-in 2.5s forwards';
+            }
+
+            loop(timestamp) {
+                if (this.gameOver) return;
+                const deltaTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+                this.accumulator += deltaTime;
+                while (this.accumulator >= TICK_RATE) {
+                    this.updateFixed();
+                    this.accumulator -= TICK_RATE;
+                }
+                this.draw(); 
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            updateFixed() {
+                if (this.pendingSpawns.length > 0) {
+                    this.pendingSpawns.forEach(s => this.executeSpawn(s.type, s.team));
+                    this.pendingSpawns = [];
+                }
+                this.dayTime = (this.dayTime + 1) % this.cycleDuration;
+                this.frameCount++;
+                
+                if (this.frameCount % 180 === 0) { 
+                    this.gold += 5; this.aiGold += 5; this.updateUI(); 
+                }
+
+                if (this.isSinglePlayer && playerRole === 'host') this.updateAI();
+
+                this.updateCastleDefense(this.castleLeft, 'guest');
+                this.updateCastleDefense(this.castleRight, 'host');
+                this.updateUnits();
+                this.updateProjectiles();
+                this.updateSpells();
+                
+                this.clouds.forEach(c => { c.x -= c.speed; if(c.x < -200) c.x = CANVAS_WIDTH+200; });
+                this.stars.forEach(s => { s.alpha += s.blink; if(s.alpha>1||s.alpha<0.2) s.blink = -s.blink; });
+                this.particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life<=0) this.particles.splice(i, 1); });
+            }
+
+            updateAI() {
+                if (!this.inputEnabled) return;
+                this.aiTimer = (this.aiTimer || 0) + 1;
+                if (this.aiTimer > 180) { 
+                    this.aiTimer = 0;
+                    const myTeam = 'guest'; const enemyTeam = 'host';
+                    const myMiners = this.units.filter(u => u.team === myTeam && u.type === 'miner').length;
+                    const enemyUnits = this.units.filter(u => u.team === enemyTeam && !u.isMiner);
+                    let choice = '';
+                    const isDrought = this.currentModifier.name.includes("DROUGHT");
+                    const minerCap = isDrought ? 1 : 2; 
+                    if (myMiners < minerCap && this.aiGold >= 100) choice = 'miner';
+                    else if (enemyUnits.length >= 3 && this.aiGold >= UNITS.wizard.cost) choice = 'wizard'; 
+                    else if (enemyUnits.length > 2) { if (this.aiGold >= UNITS.spear.cost) choice = 'spear'; else if (this.aiGold >= UNITS.archer.cost) choice = 'archer'; }
+                    else { 
+                        const r = this.rng.next(); 
+                        if (r < 0.4 && this.aiGold >= UNITS.sword.cost) choice = 'sword'; else if (r < 0.7 && this.aiGold >= UNITS.archer.cost) choice = 'archer'; else if (this.aiGold >= UNITS.spear.cost) choice = 'spear'; 
+                    }
+                    if (choice && this.aiGold >= UNITS[choice].cost) { this.aiGold -= UNITS[choice].cost; this.spawnUnit(choice, myTeam); }
+                }
+            }
+
+            updateUnits() {
+                this.units.forEach(u => {
+                    if (u.dead) return;
+                    u.animFrame += 0.15; 
+                    if (u.type === 'miner') { this.updateMiner(u); return; }
+                    let target = null, closestDist = Infinity;
+                    this.units.forEach(enemy => { if (enemy.team !== u.team && !enemy.dead) { const dist = Math.abs(enemy.x - u.x); if (dist < u.range && dist < closestDist) { closestDist = dist; target = enemy; } } });
+                    if (!target) { const enemyCastle = u.team === 'host' ? this.castleRight : this.castleLeft; if (Math.abs(enemyCastle.x - u.x) < u.range + 60) target = enemyCastle; }
+                    if (target) {
+                        u.state = 'attack'; u.attackTimer++;
+                        if (u.attackTimer >= u.stats.attackSpeed) { u.attackTimer = 0; this.performAttack(u, target); }
+                    } else {
+                        u.state = 'walk'; u.attackTimer = 0;
+                        const moveDir = u.team === 'host' ? 1 : -1;
+                        u.x += (u.stats.speed / 2) * moveDir; 
+                        if (u.team === 'host' && u.x > this.castleRight.x - 60) u.x = this.castleRight.x - 60;
+                        if (u.team === 'guest' && u.x < this.castleLeft.x + 60) u.x = this.castleLeft.x + 60;
+                    }
+                });
+                this.units = this.units.filter(u => !u.dead);
+            }
+
+            updateProjectiles() {
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const p = this.projectiles[i];
+                    p.x += p.vx * 0.5; p.y += p.vy * 0.5; p.vy += 0.15; 
+                    p.rotation = Math.atan2(p.vy, p.vx);
+                    let hit = false;
+                    if (p.y >= GROUND_Y) { hit = true; this.createParticles(p.x, p.y, '#9ca3af', 3); } 
+                    else {
+                        for (let j = 0; j < this.units.length; j++) {
+                            const u = this.units[j];
+                            if (u.team !== p.team && !u.dead && Math.abs(u.x - p.x) < 20 && Math.abs((GROUND_Y - 40) - p.y) < 50) {
+                                u.hp -= p.damage; this.checkDeath(u); this.createParticles(u.x, u.y - 40, '#ef4444', 5); hit = true; break; 
+                            }
+                        }
+                        if (!hit) {
+                            const castle = p.team === 'host' ? this.castleRight : this.castleLeft;
+                            if (Math.abs(p.x - castle.x) < 40 && p.y > GROUND_Y - 150) {
+                                castle.hp -= p.damage; this.createParticles(p.x, p.y, '#888', 3); hit = true;
+                                if (castle.hp <= 0) { castle.hp = 0; this.triggerWin(castle === this.castleRight ? 'host' : 'guest'); }
+                            }
+                        }
+                    }
+                    if (hit) this.projectiles.splice(i, 1);
+                }
+            }
+
+            updateSpells() {
+                this.spells.forEach((s, index) => {
+                    s.timer++;
+                    if (s.timer > 60) { 
+                        this.units.forEach(u => { if (u.team !== s.team && !u.dead && Math.abs(u.x - s.x) < 80) { u.hp -= s.damage; this.checkDeath(u); this.createParticles(u.x, u.y - 30, '#a855f7', 5); } });
+                        const enemyCastle = s.team === 'host' ? this.castleRight : this.castleLeft;
+                        if (Math.abs(s.x - enemyCastle.x) < 80) {
+                            enemyCastle.hp -= s.damage;
+                            this.createParticles(enemyCastle.x, GROUND_Y - 50, '#888', 10);
+                            if (enemyCastle.hp <= 0) { enemyCastle.hp = 0; this.triggerWin(enemyCastle === this.castleRight ? 'host' : 'guest'); }
+                        }
+                        this.spells.splice(index, 1); this.createParticles(s.x, GROUND_Y, '#9333ea', 20);
+                    }
+                });
+            }
+
+            updateCastleDefense(castle, enemyTeam) {
+                castle.fireTimer++;
+                const fireRate = this.currentModifier.towerRate * 2; 
+                if (castle.fireTimer >= fireRate) { 
+                    let closest = null, minDist = CASTLE_RANGE;
+                    this.units.forEach(u => { if (u.team === enemyTeam && !u.dead) { const dist = Math.abs(u.x - castle.x); if (dist < minDist) { minDist = dist; closest = u; } } });
+                    if (closest) { castle.fireTimer = 0; this.fireArrow(castle.x, GROUND_Y - 200, closest, CASTLE_DMG, castle.team); }
+                }
+            }
+
+            updateMiner(u) {
+                const myCastle = u.team === 'host' ? this.castleLeft : this.castleRight;
+                const myMine = u.team === 'host' ? this.mineLeft : this.mineRight;
+                const speed = u.stats.speed / 2; 
+                if (!u.minerState) u.minerState = 'to_mine';
+                if (u.minerState === 'to_mine') {
+                    u.state = 'walk';
+                    const targetX = myMine.x + (u.team === 'host' ? 40 : -40);
+                    const dir = targetX > u.x ? 1 : -1;
+                    if (Math.abs(targetX - u.x) < 5) { u.minerState = 'mining'; u.mineTimer = 0; } else { u.x += speed * dir; }
+                } else if (u.minerState === 'mining') {
+                    u.state = 'attack'; u.mineTimer++;
+                    if (u.mineTimer > 240) { u.minerState = 'to_castle'; u.hasGold = true; } 
+                } else if (u.minerState === 'to_castle') {
+                    u.state = 'walk';
+                    const targetX = myCastle.x;
+                    const dir = targetX > u.x ? 1 : -1;
+                    if (Math.abs(targetX - u.x) < 10) { this.addIncome(u.stats.capacity, u.team); u.minerState = 'to_mine'; u.hasGold = false; } else { u.x += speed * dir; }
+                }
+            }
+
+            addIncome(amount, team) {
+                const finalAmount = amount * this.currentModifier.incomeMult;
+                const el = document.createElement('div'); el.className = 'income-text'; el.innerText = `+${finalAmount} G`;
+                el.style.left = (team === 'host' ? '10%' : '85%'); el.style.top = '40%';
+                document.getElementById('income-container').appendChild(el); setTimeout(() => el.remove(), 1000);
+                if (this.isSinglePlayer) { if (team === 'host') this.gold += finalAmount; else this.aiGold += finalAmount; } 
+                else if (team === playerRole) this.gold += finalAmount;
+                this.updateUI();
+            }
+
+            performAttack(attacker, target) {
+                if (attacker.type === 'archer') this.fireArrow(attacker.x, GROUND_Y - 45, target, attacker.stats.dmg, attacker.team);
+                else if (attacker.type === 'wizard') this.spells.push({ x: target.x, y: GROUND_Y, timer: 0, team: attacker.team, damage: attacker.stats.dmg });
+                else {
+                    target.hp -= attacker.stats.dmg; this.createParticles(target.x || (target===this.castleLeft?120:CANVAS_WIDTH-120), GROUND_Y - 50, '#fff', 3);
+                    if (target.hp <= 0 && (target === this.castleLeft || target === this.castleRight) && (playerRole === 'host' || this.isSinglePlayer)) {
+                        target.hp = 0; this.triggerWin(target === this.castleRight ? 'host' : 'guest');
+                    } else if (target !== this.castleLeft && target !== this.castleRight) this.checkDeath(target);
+                }
+            }
+
+            fireArrow(startX, startY, target, dmg, team) {
+                let targetX = target.x; let targetY = GROUND_Y - 30; 
+                const dx = targetX - startX; const dy = targetY - startY; const dist = Math.sqrt(dx*dx + dy*dy);
+                let vx, vy;
+                if (Math.abs(dx) < 150) { vx = Math.cos(Math.atan2(dy, dx)) * 15; vy = Math.sin(Math.atan2(dy, dx)) * 15; } 
+                else { const time = dist / 12; vx = dx / time; vy = (dy - 0.5 * 0.25 * time * time) / time; }
+                const variance = this.rng.range(-0.5, 0.5);
+                this.projectiles.push({ x: startX, y: startY, vx: vx + variance, vy: vy + variance, damage: dmg, team: team, rotation: 0 });
+            }
+
+            checkDeath(unit) { if (unit.hp <= 0) { unit.dead = true; this.createParticles(unit.x, GROUND_Y - 30, unit.stats.color, 15); } }
+            createParticles(x, y, color, count) { for(let i=0; i<count; i++) this.particles.push({ x: x, y: y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 20+Math.random()*10, color: color }); }
+            triggerWin(winner) { this.gameOver = true; if (this.isSinglePlayer) this.showEndScreen(winner); else lobby.reportWin(winner); }
+            showEndScreen(winner) {
+                this.gameOver = true; document.getElementById('end-game-screen').style.display = 'flex';
+                document.getElementById('end-title').innerText = (winner === playerRole) ? "VICTORY" : "DEFEAT";
+                document.getElementById('end-title').style.color = (winner === playerRole) ? '#60a5fa' : '#ef4444';
+            }
+
+            draw() {
+                const ctx = this.ctx; const t = this.dayTime / this.cycleDuration;
+                let topC='#1e3a8a', botC='#60a5fa', ambientDark=0;
+                if (t >= 0.45 && t < 0.55) { topC='#4c1d95'; botC='#f97316'; ambientDark=(t-0.45)*5; }
+                else if (t >= 0.55 && t < 0.95) { topC='#0f172a'; botC='#1e1b4b'; ambientDark=0.5; }
+                else if (t >= 0.95) { topC='#1e3a8a'; botC='#f472b6'; ambientDark=0.5-((t-0.95)*10); }
+                
+                const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT); grad.addColorStop(0, topC); grad.addColorStop(1, botC);
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                ctx.save(); ctx.scale(this.scaleX, this.scaleY);
+                if (ambientDark > 0.1) { ctx.fillStyle = '#fff'; this.stars.forEach(s => { ctx.globalAlpha = s.alpha * (ambientDark*2); ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill(); }); ctx.globalAlpha = 1; }
+                
+                const sunX = (t*2)*CANVAS_WIDTH - 200; const sunYPos = 100 + Math.pow((t-0.25)*4, 2)*200;
+                if (t < 0.6) { ctx.fillStyle = '#fde047'; ctx.shadowColor='#facc15'; ctx.shadowBlur=40; ctx.beginPath(); ctx.arc(sunX, sunYPos, 40, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur=0; }
+                else { const moonX = ((t-0.5)*2)*CANVAS_WIDTH - 200; ctx.fillStyle = '#e2e8f0'; ctx.shadowColor='#fff'; ctx.shadowBlur=20; ctx.beginPath(); ctx.arc(moonX, sunYPos, 30, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur=0; }
+
+                ctx.fillStyle = `rgba(255,255,255,${0.2 - (ambientDark * 0.1)})`;
+                this.clouds.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, 40*c.size, 0, Math.PI*2); ctx.arc(c.x+30*c.size, c.y-10*c.size, 50*c.size, 0, Math.PI*2); ctx.fill(); });
+                
+                ctx.fillStyle = ambientDark > 0.3 ? '#020617' : '#111827'; ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(200, GROUND_Y-200); ctx.lineTo(400, GROUND_Y-50); ctx.lineTo(900, GROUND_Y-80); ctx.lineTo(1280, GROUND_Y-300); ctx.lineTo(1280, GROUND_Y); ctx.fill();
+                ctx.fillStyle = ambientDark > 0.3 ? '#111827' : '#1f2937'; ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT-GROUND_Y);
+                ctx.fillStyle = ambientDark > 0.3 ? '#1f2937' : '#374151'; ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, 10);
+
+                this.drawMine(this.mineLeft); this.drawMine(this.mineRight);
+                this.drawCastle(this.castleLeft.x, this.castleLeft.team); this.drawCastle(this.castleRight.x, this.castleRight.team);
+
+                this.spells.forEach(s => { ctx.fillStyle = `rgba(147, 51, 234, ${0.5 + Math.sin(s.timer)*0.5})`; ctx.beginPath(); ctx.ellipse(s.x, s.y, 60 * (s.timer/60), 20 * (s.timer/60), 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#e9d5ff'; ctx.lineWidth = 2; ctx.stroke(); });
+                this.units.forEach(u => this.drawStickmanNew(u));
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+                this.projectiles.forEach(p => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(10,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(5,-3); ctx.lineTo(10,0); ctx.lineTo(5,3); ctx.stroke(); ctx.restore(); });
+                this.particles.forEach(p => { ctx.fillStyle=p.color; ctx.globalAlpha=p.life/30; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha=1; });
+                if (ambientDark > 0) { ctx.fillStyle = `rgba(0, 0, 20, ${ambientDark})`; ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); }
+                ctx.restore();
+                document.getElementById('p1-hp-bar').style.width = (this.castleLeft.hp / this.castleLeft.maxHp * 100) + '%';
+                document.getElementById('p2-hp-bar').style.width = (this.castleRight.hp / this.castleRight.maxHp * 100) + '%';
+            }
+
+            drawMine(mine) {
+                const ctx = this.ctx; ctx.save(); ctx.translate(mine.x, mine.y);
+                ctx.fillStyle = '#854d0e'; ctx.beginPath(); ctx.arc(0, 0, 40, Math.PI, 0); ctx.fill();
+                ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(-10, -10, 8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(15, -15, 10, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+
+            drawCastle(x, team) {
+                const ctx = this.ctx; const isHost = team === 'host';
+                ctx.save(); ctx.translate(x, GROUND_Y);
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(0, 0, 60, 10, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#4b5563'; ctx.fillRect(-40, -140, 80, 140);
+                ctx.fillStyle = isHost ? '#2563eb' : '#dc2626'; ctx.fillRect(-30, -100, 60, 60);
+                ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(0, -180, 25, 0, Math.PI*2); ctx.fill();
+                
+                if (team === playerRole) {
+                    ctx.save(); ctx.translate(0, -260); 
+                    ctx.fillStyle = '#facc15'; ctx.font = 'bold 24px monospace'; ctx.textAlign = 'center'; ctx.shadowColor = 'black'; ctx.shadowBlur = 4; ctx.fillText("YOU", 0, 0);
+                    ctx.beginPath(); ctx.moveTo(-10, 10); ctx.lineTo(10, 10); ctx.lineTo(0, 25); ctx.fill();
+                    ctx.restore();
+                }
+
+                // ARCHER ON TOWER: MOVED BACK AND DOWN
+                ctx.save(); 
+                // x + offset: if Host (left) move left (-30), if Guest (right) move right (+30)
+                // y offset: -150 is lower than -200
+                const archerOffset = isHost ? -30 : 30;
+                ctx.translate(archerOffset, -150); 
+                const dir = isHost ? 1 : -1; ctx.scale(dir, 1);
+                ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI*2); ctx.fill(); 
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10); ctx.stroke(); 
+                ctx.lineWidth = 1; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(5, -5, 8, -Math.PI/2, Math.PI/2); ctx.stroke(); 
+                ctx.restore();
+
+                ctx.fillStyle = '#000'; ctx.fillRect(-40, -220, 80, 10);
+                const max = isHost ? this.castleLeft.maxHp : this.castleRight.maxHp; const cur = isHost ? this.castleLeft.hp : this.castleRight.hp;
+                ctx.fillStyle = isHost ? '#3b82f6' : '#ef4444'; ctx.fillRect(-39, -219, 78 * (cur/max), 8);
+                ctx.restore();
+            }
+
+            drawStickmanNew(u) {
+                const ctx = this.ctx; const x = u.x; const y = GROUND_Y;
+                const teamColor = u.team === 'host' ? '#3b82f6' : '#ef4444';
+                const dir = u.team === 'host' ? 1 : -1;
+                const showBag = u.type === 'miner' && u.hasGold;
+                const bobY = u.state === 'walk' ? Math.abs(Math.sin(u.animFrame * 2)) * 3 : 0;
+                const hipX = x; const hipY = y - 45 - bobY; const headY = hipY - 25;
+                ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
+
+                this.drawLeg(ctx, hipX, hipY, (u.state==='walk'?Math.sin(u.animFrame*2+Math.PI)*0.5:0), dir);
+                this.drawLeg(ctx, hipX, hipY, (u.state==='walk'?Math.sin(u.animFrame*2)*0.5:0), dir);
+
+                ctx.strokeStyle = '#111'; ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX+(dir*2), headY); ctx.stroke();
+                if (showBag) { ctx.fillStyle = '#facc15'; ctx.strokeStyle='#854d0e'; ctx.lineWidth=1; ctx.beginPath(); ctx.rect(hipX - (10*dir), hipY - 20, 12, 12); ctx.fill(); ctx.stroke(); }
+                let armAngle = Math.PI/4;
+                if (u.type === 'wizard') armAngle = u.state === 'attack' ? -Math.PI/2 : 0; 
+                else armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
+                this.drawArm(ctx, hipX, headY+5, armAngle, u.type, dir, false);
+                this.drawArm(ctx, hipX, headY+5, armAngle-0.2, u.type, dir, true);
+                ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hipX+(dir*2), headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                if (u.type === 'miner') { ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(hipX+(dir*2)-12, headY-12, 24, 6); ctx.fill(); ctx.beginPath(); ctx.rect(hipX+(dir*2)-8, headY-18, 16, 8); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(hipX+(dir*10), headY-14, 3, 0, Math.PI*2); ctx.fill(); }
+                else if (u.type === 'wizard') { ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(hipX+(dir*2)-15, headY-5); ctx.lineTo(hipX+(dir*2)+15, headY-5); ctx.lineTo(hipX+(dir*2), headY-35); ctx.fill(); }
+                else { ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(hipX+(dir*2), headY-8, 11, Math.PI, 0); ctx.fill(); }
+                ctx.fillStyle = 'red'; ctx.fillRect(x-15, y-100, 30, 4); ctx.fillStyle = '#0f0'; ctx.fillRect(x-15, y-100, 30*(u.hp/u.stats.hp), 4);
+            }
+
+            drawLeg(ctx, hX, hY, a, d) {
+                const kX = hX + (Math.sin(a) * 20 * d); 
+                const kY = hY + Math.cos(a) * 20;
+                const fX = kX + (Math.sin(a - 0.5) * 22 * d); 
+                const fY = kY + Math.cos(a - 0.5) * 22;
+                ctx.strokeStyle='#000'; ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
+            }
+            
+            drawArm(ctx, sX, sY, a, type, d, front) {
+                let fa = a; if(type==='archer') fa = -0.2;
+                if(type==='miner' && !front) return; 
+                const eX = sX + Math.sin(fa)*15*d; const eY = sY + Math.cos(fa)*15;
+                const hX = eX + Math.sin(fa+0.5)*15*d; const hY = eY + Math.cos(fa+0.5)*15;
+                ctx.strokeStyle='#000'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.lineTo(hX, hY); ctx.stroke();
+                if (front) {
+                    ctx.save(); ctx.translate(hX, hY); ctx.scale(d, 1);
+                    if (type === 'miner') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#a16207'; ctx.fillRect(-2, -20, 4, 30); ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.lineTo(0, -10); ctx.fill(); }
+                    else if (type === 'wizard') { ctx.rotate(fa - Math.PI/2); ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -40, 4, 50); ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -40, 6, 0, Math.PI*2); ctx.fill(); }
+                    else if (type === 'sword') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); }
+                    else if (type === 'spear') { ctx.rotate(Math.PI/2 + 0.2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); }
+                    else if (type === 'archer') { ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); }
+                    ctx.restore();
+                }
+            }
+
+            trySpawn(type) {
+                if (this.gameOver || !this.inputEnabled) return; 
+                const cost = UNITS[type].cost;
+                if (this.gold >= cost) { this.gold -= cost; this.updateUI(); if (this.isSinglePlayer) this.spawnUnit(type, 'host'); else lobby.sendSpawnCommand(type); }
+            }
+
+            spawnUnit(type, team) {
+                this.pendingSpawns.push({ type, team });
+            }
+
+            executeSpawn(type, team) {
+                const stats = UNITS[type];
+                const spawnX = team === 'host' ? this.castleLeft.x + 60 : this.castleRight.x - 60;
+                this.units.push({ x: spawnX, type: type, team: team, hp: stats.hp, stats: stats, state: 'walk', dead: false, animFrame: 0, attackTimer: 0, range: stats.range, minerState: 'to_mine', mineTimer: 0, hasGold: false });
+            }
+
+            updateUI() {
+                document.getElementById('gold-count').innerText = Math.floor(this.gold);
+                ['miner', 'sword', 'spear', 'archer', 'wizard'].forEach(type => {
+                    const btn = document.getElementById('btn-'+type);
+                    if (this.gold < UNITS[type].cost || !this.inputEnabled) btn.classList.add('disabled'); else btn.classList.remove('disabled');
+                });
+            }
+        }
+
+        const game = new StickmanGame();
+        window.game = game;
+
+        class LobbySystem {
+            constructor() { 
+                this.unsubscribeGame = null; 
+                this.unsubscribeCommands = null; 
+                this.unsubscribeRooms = null; 
+            }
+            
+            setLoading(isLoading) { 
+                document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none'; 
+            }
+
+            async init() {
+                if(!isFirebaseAvailable) return;
+                try {
+                    await this.authenticate();
+                    this.listenToRoomList();
+                } catch (e) { console.error("Auth failed:", e); }
+            }
+
+            listenToRoomList() {
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'matches');
+                this.unsubscribeRooms = onSnapshot(q, (snapshot) => {
+                    const container = document.getElementById('room-list-container');
+                    container.innerHTML = '';
+                    if (snapshot.empty) {
+                        container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Tidak ada room aktif. Buat baru!</div>';
+                    } else {
+                        const rooms = [];
+                        snapshot.forEach(doc => { const data = doc.data(); if (data.status === 'waiting') rooms.push({ id: doc.id, ...data }); });
+                        rooms.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                        if (rooms.length === 0) container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">Tidak ada room aktif. Buat baru!</div>';
+                        else {
+                            rooms.forEach(room => {
+                                const modName = MODIFIERS[room.modifier]?.name || "NORMAL";
+                                const el = document.createElement('div'); el.className = 'room-item';
+                                el.innerHTML = `<div class="room-info"><span class="room-id">ROOM ${room.id}</span><span class="room-status text-gray-400 text-xs">${modName}</span></div><button class="btn-join">GABUNG</button>`;
+                                el.querySelector('button').onclick = () => this.joinRoom(room.id);
+                                container.appendChild(el);
+                            });
+                        }
+                    }
+                });
+            }
+
+            refreshRooms() {
+                const container = document.getElementById('room-list-container');
+                container.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm animate-pulse">Menyegarkan...</div>';
+                if(this.unsubscribeRooms) this.unsubscribeRooms();
+                this.listenToRoomList();
+            }
+
+            getRandomModifier() {
+                const keys = Object.keys(MODIFIERS);
+                let newKey = keys[Math.floor(Math.random() * keys.length)];
+                if (keys.length > 1) {
+                    while (newKey === lastModifierKey) {
+                        newKey = keys[Math.floor(Math.random() * keys.length)];
+                    }
+                }
+                lastModifierKey = newKey;
+                return newKey;
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().then(() => {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock("landscape").catch(err => console.log("Lock failed:", err));
+                        }
+                    }).catch(err => alert("Fullscreen tidak didukung browser ini."));
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+
+            surrender() {
+                if (!currentGameId || game.gameOver) return;
+                const enemy = playerRole === 'host' ? 'guest' : 'host';
+                // Local UI confirm is annoying in battle, maybe just instant?
+                // Nah, safety first.
+                if (confirm("Yakin ingin menyerah?")) {
+                    this.reportWin(enemy);
+                }
+            }
+
+            async startSinglePlayer() {
+                game.isSinglePlayer = true; playerRole = 'host';
+                const randomKey = this.getRandomModifier();
+                game.setModifier(randomKey, 12345); 
+                this.hideLobby(); game.start();
+            }
+
+            async createGame() {
+                if (!isFirebaseAvailable) return alert("Error Config.");
+                this.setLoading(true);
+                if (!auth.currentUser) await this.authenticate();
+                try {
+                    const userId = auth.currentUser.uid;
+                    const randomKey = this.getRandomModifier();
+                    const shortId = Math.floor(1000 + Math.random() * 9000).toString();
+                    const seed = Math.floor(Math.random() * 100000); 
+
+                    const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'matches', shortId);
+                    await setDoc(gameRef, { 
+                        host: userId, guest: null, status: 'waiting', modifier: randomKey, seed: seed, createdAt: serverTimestamp() 
+                    });
+                    
+                    currentGameId = shortId; playerRole = 'host';
+                    game.setModifier(randomKey, seed); 
+                    
+                    document.getElementById('menu-start').style.display = 'none'; document.getElementById('menu-waiting').style.display = 'block'; document.getElementById('game-id-display').innerText = currentGameId;
+                    this.listenToGame(currentGameId);
+                } catch(e) { console.error(e); alert("Gagal membuat room."); } finally { this.setLoading(false); }
+            }
+
+            async cancelHost() {
+                if (!currentGameId) return;
+                try { if(this.unsubscribeGame) this.unsubscribeGame(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'matches', currentGameId)); this.resetToMenu(); } catch(e){ console.error(e); }
+            }
+
+            async joinRoom(gameId) {
+                if (!isFirebaseAvailable) return;
+                this.setLoading(true);
+                if (!auth.currentUser) await this.authenticate();
+                try {
+                    const gameRef = doc(db, 'artifacts', appId, 'public', 'data', 'matches', gameId);
+                    const snap = await getDoc(gameRef);
+                    if (snap.exists() && snap.data().status === 'waiting') {
+                        await updateDoc(gameRef, { guest: auth.currentUser.uid, status: 'playing' });
+                        currentGameId = gameId; playerRole = 'guest'; this.listenToGame(currentGameId);
+                    } else { alert("Room penuh atau sudah hilang."); }
+                } catch(e) { console.error(e); } finally { this.setLoading(false); }
+            }
+
+            async authenticate() {
+                const initAuth = async () => { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } else { await signInAnonymously(auth); } };
+                await initAuth();
+            }
+
+            listenToGame(gameId) {
+                this.unsubscribeGame = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'matches', gameId), (snap) => {
+                    if(!snap.exists()) { if(playerRole==='guest'&&!game.gameOver) { alert("Room dibatalkan host."); this.resetToMenu(); } return; }
+                    const data = snap.data();
+                    if (playerRole === 'guest' && data.modifier && data.seed) game.setModifier(data.modifier, data.seed);
+                    if (data.status === 'playing' && document.getElementById('lobby-modal').style.display !== 'none') { this.hideLobby(); game.start(); this.listenToCommands(gameId); }
+                    if (data.winner) game.showEndScreen(data.winner);
+                });
+            }
+
+            listenToCommands(gameId) {
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'matches', gameId, 'commands');
+                this.unsubscribeCommands = onSnapshot(q, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => { 
+                        if (change.type === "added") { 
+                            const data = change.doc.data(); 
+                            game.spawnUnit(data.type, data.team); 
+                        } 
+                    });
+                });
+            }
+
+            async sendSpawnCommand(unitType) {
+                if (!isFirebaseAvailable) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'matches', currentGameId, 'commands'), { type: unitType, team: playerRole, timestamp: serverTimestamp() });
+            }
+
+            async reportWin(winner) {
+                if (!currentGameId) return;
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'matches', currentGameId), { winner: winner });
+            }
+
+            hideLobby() { document.getElementById('lobby-modal').style.display = 'none'; }
+            resetToMenu() {
+                game.reset(); currentGameId = null; playerRole = null;
+                if(this.unsubscribeGame) this.unsubscribeGame(); if(this.unsubscribeCommands) this.unsubscribeCommands();
+                document.getElementById('lobby-modal').style.display = 'flex';
+                document.getElementById('menu-waiting').style.display = 'none'; document.getElementById('menu-start').style.display = 'block';
+            }
+        }
+
+        const lobby = new LobbySystem();
+        window.lobby = lobby;
+        lobby.init(); 
+
+    </script>
+</body>
+</html>
