@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="screen-orientation" content="landscape">
-    <title>Stickman Battle: Legacy Anim v5.8</title>
+    <title>Stickman Battle: Anim Fix v6.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -39,36 +39,28 @@
         
         #lobby-modal, #end-game-screen, #loading-overlay, #gamemode-popup, #rotate-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(5px); }
         #lobby-modal { background: rgba(0,0,0,0.95); }
-        #end-game-screen { background: rgba(0,0,0,0.85); display: none; flex-direction: column; z-index: 90; }
+        #end-game-screen { background: rgba(0,0,0,0.85); display: none; flex-direction: column; z-index: 90; overflow: hidden; }
         #loading-overlay { background: rgba(0,0,0,0.7); display: none; z-index: 101; }
         #gamemode-popup { display: none; background: rgba(0,0,0,0.4); pointer-events: none; flex-direction: column; animation: fadeOut 0.5s ease-in 2.5s forwards; }
         
+        #effect-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+
         .modal-content { background: #1f2937; padding: 1.5rem; border-radius: 1rem; text-align: center; max-width: 90%; width: 400px; border: 1px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         
         .mode-title { font-size: 2.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px currentColor; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .mode-desc { font-size: 1.2rem; color: #e5e7eb; margin-top: 8px; text-shadow: 2px 2px 4px black; }
-        .end-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .end-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10; }
         
         .gold-display { position: absolute; top: 60px; left: 15px; font-size: 20px; color: #fbbf24; font-weight: bold; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; border: 1px solid #fbbf24; }
         .income-text { position: absolute; color: #fbbf24; font-weight: bold; font-size: 18px; pointer-events: none; animation: floatUp 1s forwards; text-shadow: 1px 1px 0 #000; }
         
         #btn-surrender {
-            position: absolute; 
-            top: 110px; 
-            left: 20px;
-            width: 40px; height: 40px;
-            background: rgba(185, 28, 28, 0.8); 
-            color: white; 
-            font-size: 20px; 
-            display: none; 
-            align-items: center; justify-content: center;
-            border-radius: 50%; 
-            border: 2px solid #fca5a5;
-            cursor: pointer; 
-            pointer-events: auto !important; 
-            z-index: 150; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
+            position: absolute; top: 110px; left: 20px; width: 40px; height: 40px;
+            background: rgba(185, 28, 28, 0.8); color: white; font-size: 20px; 
+            display: none; align-items: center; justify-content: center;
+            border-radius: 50%; border: 2px solid #fca5a5;
+            cursor: pointer; pointer-events: auto !important; z-index: 150; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s;
         }
         #btn-surrender:active { transform: scale(0.9); background: #ef4444; }
 
@@ -131,7 +123,7 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
-    <div id="version-tag">ver 5.8 (New Anim)</div>
+    <div id="version-tag">ver 6.2 (Anim Polish)</div>
 
     <!-- Rotate Overlay -->
     <div id="rotate-overlay">
@@ -179,16 +171,18 @@
         <p id="popup-desc" class="mode-desc">Standard Rules</p>
     </div>
 
+    <!-- End Game Screen with Canvas for Effects -->
     <div id="end-game-screen">
+        <canvas id="effect-canvas"></canvas>
         <h1 id="end-title" class="end-title">VICTORY</h1>
-        <button class="btn btn-primary" style="width: 200px;" onclick="lobby.resetToMenu()">Kembali ke Menu</button>
+        <button class="btn btn-primary" style="width: 200px; z-index: 10;" onclick="lobby.resetToMenu()">Kembali ke Menu</button>
     </div>
 
     <!-- Lobby Modal -->
     <div id="lobby-modal">
         <div class="modal-content">
             <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
-            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V5.8</p>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V6.2</p>
             
             <div id="menu-start">
                 <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
@@ -289,6 +283,104 @@
             range(min, max) { return min + this.next() * (max - min); }
         }
 
+        // --- VISUAL EFFECTS MANAGER ---
+        class FXSystem {
+            constructor() {
+                this.canvas = document.getElementById('effect-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.active = false;
+                this.particles = [];
+                this.type = null; 
+            }
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            start(type) {
+                this.active = true;
+                this.type = type;
+                this.particles = [];
+                this.resize(); 
+                this.loop();
+            }
+            stop() {
+                this.active = false;
+                this.particles = [];
+                this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height);
+            }
+            loop() {
+                if(!this.active) return;
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            }
+            update() {
+                if (this.type === 'victory') {
+                    if(this.particles.length < 200) {
+                        this.particles.push({
+                            x: Math.random() * this.canvas.width,
+                            y: -20,
+                            vx: (Math.random() - 0.5) * 5,
+                            vy: 2 + Math.random() * 5,
+                            color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                            rotation: Math.random() * 360,
+                            vRot: (Math.random() - 0.5) * 10
+                        });
+                    }
+                } else if (this.type === 'defeat') {
+                    if(this.particles.length < 500) {
+                         this.particles.push({
+                            x: Math.random() * this.canvas.width,
+                            y: -50,
+                            vx: 1, 
+                            vy: 15 + Math.random() * 10,
+                            len: 20 + Math.random() * 20
+                        });
+                    }
+                    if(Math.random() < 0.01) {
+                        this.ctx.fillStyle = "rgba(255,255,255,0.3)";
+                        this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+                    }
+                }
+
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if(p.rotation) p.rotation += p.vRot;
+                    if (p.y > this.canvas.height) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                if (this.type === 'victory') {
+                    this.particles.forEach(p => {
+                        this.ctx.save();
+                        this.ctx.translate(p.x, p.y);
+                        this.ctx.rotate(p.rotation * Math.PI / 180);
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fillRect(-5, -5, 10, 10);
+                        this.ctx.restore();
+                    });
+                } else if (this.type === 'defeat') {
+                    this.ctx.strokeStyle = "rgba(174, 194, 224, 0.5)";
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.particles.forEach(p => {
+                        this.ctx.moveTo(p.x, p.y);
+                        this.ctx.lineTo(p.x + p.vx, p.y + p.len);
+                    });
+                    this.ctx.stroke();
+                }
+            }
+        }
+        
+        const fx = new FXSystem();
+
         class StickmanGame {
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
@@ -335,6 +427,7 @@
                 this.aiGold = 0;
                 this.dayTime = 0;
                 this.pendingSpawns = []; 
+                fx.stop(); // Stop any effects
                 
                 const hp = this.currentModifier.castleHp;
                 this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140 };
@@ -521,7 +614,6 @@
             updateCastleDefense(castle, enemyTeam) {
                 castle.fireTimer++;
                 const fireRate = this.currentModifier.towerRate * 2; 
-                // USE DYNAMIC RANGE
                 const range = this.currentModifier.towerRange || 400;
 
                 if (castle.fireTimer >= fireRate) { 
@@ -599,6 +691,9 @@
                 this.gameOver = true; document.getElementById('end-game-screen').style.display = 'flex';
                 document.getElementById('end-title').innerText = (winner === playerRole) ? "VICTORY" : "DEFEAT";
                 document.getElementById('end-title').style.color = (winner === playerRole) ? '#60a5fa' : '#ef4444';
+                // Trigger FX
+                if(winner === playerRole) fx.start('victory');
+                else fx.start('defeat');
             }
 
             draw() {
@@ -646,36 +741,62 @@
                 ctx.restore();
             }
 
+            // REDESIGNED CASTLE (TRAPEZOID + STATUE)
             drawCastle(x, team) {
                 const ctx = this.ctx; const isHost = team === 'host';
                 ctx.save(); ctx.translate(x, GROUND_Y);
-                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(0, 0, 60, 10, 0, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#4b5563'; ctx.fillRect(-40, -140, 80, 140);
-                ctx.fillStyle = isHost ? '#2563eb' : '#dc2626'; ctx.fillRect(-30, -100, 60, 60);
-                ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(0, -180, 25, 0, Math.PI*2); ctx.fill();
+                // Base - Trapezoid
+                ctx.fillStyle = '#4b5563'; 
+                ctx.beginPath();
+                ctx.moveTo(-50, 0); 
+                ctx.lineTo(-40, -120); 
+                ctx.lineTo(40, -120); 
+                ctx.lineTo(50, 0); 
+                ctx.fill();
+
+                // Tower Block
+                ctx.fillStyle = '#374151';
+                ctx.fillRect(-30, -160, 60, 40);
+
+                // Battlements
+                ctx.fillStyle = '#1f2937';
+                ctx.fillRect(-35, -170, 15, 10);
+                ctx.fillRect(-7, -170, 14, 10);
+                ctx.fillRect(20, -170, 15, 10);
+
+                // Team Banner
+                ctx.fillStyle = isHost ? '#2563eb' : '#dc2626'; 
+                ctx.fillRect(-20, -150, 40, 60);
+
+                // Statue Head on Top
+                ctx.fillStyle = '#4b5563';
+                ctx.beginPath(); ctx.arc(0, -200, 30, 0, Math.PI*2); ctx.fill();
                 
+                // Statue Arms/Weapons based on team (Decoration)
+                ctx.strokeStyle = '#374151'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(-35, -180); ctx.lineTo(-60, -120); ctx.stroke(); // Left arm
+                ctx.beginPath(); ctx.moveTo(35, -180); ctx.lineTo(60, -120); ctx.stroke(); // Right arm
+
                 if (team === playerRole) {
-                    ctx.save(); ctx.translate(0, -260); 
+                    ctx.save(); ctx.translate(0, -320); 
                     ctx.fillStyle = '#facc15'; ctx.font = 'bold 24px monospace'; ctx.textAlign = 'center'; ctx.shadowColor = 'black'; ctx.shadowBlur = 4; ctx.fillText("YOU", 0, 0);
                     ctx.beginPath(); ctx.moveTo(-10, 10); ctx.lineTo(10, 10); ctx.lineTo(0, 25); ctx.fill();
                     ctx.restore();
                 }
 
-                // ARCHER ON TOWER: MOVED BACK AND DOWN
+                // Archer behind tower
                 ctx.save(); 
-                // x + offset: if Host (left) move left (-30), if Guest (right) move right (+30)
-                // y offset: -150 is lower than -200
-                const archerOffset = isHost ? -30 : 30;
-                ctx.translate(archerOffset, -150); 
+                const archerOffset = isHost ? -20 : 20;
+                ctx.translate(archerOffset, -130); 
                 const dir = isHost ? 1 : -1; ctx.scale(dir, 1);
                 ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI*2); ctx.fill(); 
                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10); ctx.stroke(); 
                 ctx.lineWidth = 1; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(5, -5, 8, -Math.PI/2, Math.PI/2); ctx.stroke(); 
                 ctx.restore();
 
-                ctx.fillStyle = '#000'; ctx.fillRect(-40, -220, 80, 10);
+                ctx.fillStyle = '#000'; ctx.fillRect(-40, 10, 80, 8);
                 const max = isHost ? this.castleLeft.maxHp : this.castleRight.maxHp; const cur = isHost ? this.castleLeft.hp : this.castleRight.hp;
-                ctx.fillStyle = isHost ? '#3b82f6' : '#ef4444'; ctx.fillRect(-39, -219, 78 * (cur/max), 8);
+                ctx.fillStyle = isHost ? '#3b82f6' : '#ef4444'; ctx.fillRect(-39, 11, 78 * (cur/max), 6);
                 ctx.restore();
             }
 
@@ -686,8 +807,10 @@
                 
                 let facingDir = u.team === 'host' ? 1 : -1; // Default
                 
-                // If miner returning to castle, face backwards relative to team
+                // FIX: Miner turning body to face castle
                 if (u.type === 'miner' && u.minerState === 'to_castle') {
+                    // If team host (left), castle is at left. So face left (-1).
+                    // If team guest (right), castle is at right. So face right (1).
                     facingDir = u.team === 'host' ? -1 : 1; 
                 }
 
@@ -704,6 +827,9 @@
                 ctx.translate(x, y);
                 ctx.scale(facingDir, 1); // FLIP CONTEXT HERE
 
+                // FIX: Wizard Upright
+                const isWizard = u.type === 'wizard';
+                
                 // Relative Coords (x=0 is hip center)
                 const headY = -70 - bobY;
                 const hipY = -45 - bobY;
@@ -714,11 +840,15 @@
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2+Math.PI)*0.5:0));
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2)*0.5:0));
 
-                // Body (Slight Spine Curve)
+                // Body (Slight Spine Curve for runners, Straight for Wizard)
                 ctx.strokeStyle = '#111'; 
                 ctx.beginPath(); 
                 ctx.moveTo(0, hipY); 
-                ctx.quadraticCurveTo(5, hipY - 20, 2, headY); // Slight forward hunch
+                if (isWizard) {
+                    ctx.lineTo(0, headY); // Straight spine
+                } else {
+                    ctx.quadraticCurveTo(5, hipY - 20, 2, headY); // Runner hunch
+                }
                 ctx.stroke();
 
                 if (showBag) { 
@@ -729,8 +859,12 @@
                 // Arms
                 let armAngle = Math.PI/4;
                 if (u.type === 'wizard') {
-                     // Attack: Raise staff forward/up (-45 deg to 0)
-                     armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
+                     // ATTACK FIX: Staff Up/Forward (-45 deg) for summoning
+                     armAngle = u.state === 'attack' ? -Math.PI/2 - 0.5 : 0.2; 
+                }
+                else if (u.type === 'spear') {
+                    // STAB: Piston motion
+                    armAngle = u.state === 'attack' ? Math.sin(u.animFrame * 5) * 0.5 : Math.PI/4;
                 }
                 else {
                     armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
@@ -743,8 +877,14 @@
 
                 // Head
                 ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; 
-                ctx.beginPath(); ctx.arc(2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(isWizard ? 0 : 2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                 
+                // Add Wizard Beard
+                if (isWizard) {
+                    ctx.fillStyle = '#eee';
+                    ctx.beginPath(); ctx.moveTo(-5, headY+5); ctx.lineTo(5, headY+5); ctx.lineTo(0, headY+15); ctx.fill();
+                }
+
                 // Accessories
                 if (u.type === 'miner') { 
                     ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(-10, headY-12, 24, 6); ctx.fill(); 
@@ -752,7 +892,12 @@
                     ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); 
                 }
                 else if (u.type === 'wizard') { 
-                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-13, headY-5); ctx.lineTo(17, headY-5); ctx.lineTo(2, headY-35); ctx.fill(); 
+                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-15, headY-5); ctx.lineTo(15, headY-5); ctx.lineTo(0, headY-35); ctx.fill(); 
+                }
+                else if (u.type === 'spear') {
+                    // Spartan Helmet
+                    ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(-2, headY-15); ctx.lineTo(12, headY-5); ctx.lineTo(2, headY+5); ctx.fill();
+                    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.rect(-4, headY-20, 8, 10); ctx.fill(); // Crest
                 }
                 else { 
                     ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); 
@@ -767,10 +912,13 @@
 
             // Simplified DrawLeg (Always assumes facing right)
             drawLeg(ctx, hX, hY, a) {
+                // FIX IDLE LEGS: If 'a' is near 0 (stopped), reduce knee bend drastically
+                const bend = Math.abs(a) < 0.1 ? 0.1 : 0.5;
+                
                 const kX = hX + (Math.sin(a) * 20); 
                 const kY = hY + Math.cos(a) * 20;
-                const fX = kX + (Math.sin(a - 0.5) * 22); 
-                const fY = kY + Math.cos(a - 0.5) * 22;
+                const fX = kX + (Math.sin(a - bend) * 22); 
+                const fY = kY + Math.cos(a - bend) * 22;
                 ctx.strokeStyle='#000'; ctx.lineWidth=6;
                 ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
             }
@@ -796,21 +944,32 @@
                     else if (type === 'wizard') { 
                         // Staff points forward/up
                         ctx.rotate(fa - Math.PI/2); 
-                        ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -40, 4, 50); 
-                        ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -40, 6, 0, Math.PI*2); ctx.fill(); 
+                        ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -50, 4, 60); // Longer staff
+                        ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -50, 8, 0, Math.PI*2); ctx.fill(); // Bigger orb
                     }
                     else if (type === 'sword') { 
                         ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); 
                         ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); 
                     }
                     else if (type === 'spear') { 
-                        ctx.rotate(Math.PI/2 + 0.2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); 
+                        // Spear Stab Angle
+                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); 
                         ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); 
+                        
+                        // Shield (Back Hand Only?) No, Front hand holds Spear. 
+                        // Shield should be drawn separately or on back arm. Simplified here.
                     }
                     else if (type === 'archer') { 
                         ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); 
                         ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); 
                     }
+                    ctx.restore();
+                } else if (type === 'spear') {
+                    // Shield on Back Arm
+                    ctx.save(); ctx.translate(hX, hY);
+                    ctx.rotate(0.2);
+                    ctx.fillStyle = '#b45309'; ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2;
+                    ctx.beginPath(); ctx.arc(0, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                     ctx.restore();
                 }
             }
@@ -921,10 +1080,8 @@
             }
 
             surrender() {
+                if (!currentGameId && !game.isSinglePlayer) return;
                 if (game.gameOver) return;
-                
-                // Allow surrender in single player or if game is active in MP
-                if (!game.isSinglePlayer && !currentGameId) return;
 
                 if (confirm("Yakin ingin menyerah?")) {
                     if (game.isSinglePlayer) {
