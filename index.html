@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="screen-orientation" content="landscape">
-    <title>Stickman Battle: Final Stable v7.5</title>
+    <title>Stickman Battle: Final Stable v8.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -37,7 +37,7 @@
         .unit-name { font-size: 9px; color: #d1d5db; margin-top: -2px; }
         .unit-key { position: absolute; top: 2px; left: 3px; font-size: 8px; color: #9ca3af; font-weight: bold; }
         
-        #lobby-modal, #end-game-screen, #loading-overlay, #gamemode-popup, #rotate-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(5px); }
+        #lobby-modal, #end-game-screen, #loading-overlay, #gamemode-popup, #rotate-overlay, #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; backdrop-filter: blur(5px); }
         #lobby-modal { background: rgba(0,0,0,0.95); }
         #end-game-screen { background: rgba(0,0,0,0.85); display: none; flex-direction: column; z-index: 90; overflow: hidden; }
         #loading-overlay { background: rgba(0,0,0,0.7); display: none; z-index: 101; }
@@ -96,15 +96,12 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
-    <div id="version-tag">ver 7.5 (Stable)</div>
+    <div id="version-tag">ver 8.1 (Fix)</div>
 
     <!-- AUDIO ELEMENTS -->
-    <!-- Lagu untuk di Lobby (Menggunakan file user) -->
     <audio id="lobby-music" loop>
         <source src="Stick Empires - Main Theme.mp3" type="audio/mpeg">
     </audio>
-
-    <!-- Lagu untuk saat Perang (Menggunakan file user) -->
     <audio id="game-music" loop>
         <source src="Field of Memories.mp3" type="audio/mpeg">
     </audio>
@@ -141,6 +138,7 @@
         <div id="income-container"></div>
 
         <div class="controls interactive" id="controls-panel" style="display:none;">
+            <!-- Updated Costs (Reverted where requested) -->
             <button class="unit-btn" onclick="game.trySpawn('miner')" id="btn-miner"><span class="unit-key">1</span><span class="unit-icon">⛏️</span><span class="unit-name">Miner</span><span class="unit-cost">100 G</span></button>
             <div style="width: 5px;"></div>
             <button class="unit-btn" onclick="game.trySpawn('sword')" id="btn-sword"><span class="unit-key">2</span><span class="unit-icon">⚔️</span><span class="unit-name">Sword</span><span class="unit-cost">100 G</span></button>
@@ -165,7 +163,7 @@
     <div id="lobby-modal">
         <div class="modal-content">
             <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
-            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V7.5</p>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V8.1</p>
             
             <div id="menu-start">
                 <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
@@ -203,7 +201,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, serverTimestamp, query, orderBy, getDoc, deleteDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIG FIREBASE
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDmer19KTaijOz3bTdknEEs5dqwKNt6HQg",
             authDomain: "masjid-pekalongan.firebaseapp.com",
@@ -232,6 +229,7 @@
         let playerRole = null; 
         let lastModifierKey = null; 
 
+        // --- CONSTANTS ---
         const CANVAS_WIDTH = 1280;
         const CANVAS_HEIGHT = 720;
         const GROUND_Y = 600; 
@@ -246,11 +244,12 @@
             SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, towerRange: 400, castleHp: 500, incomeMult: 1, color: "#ef4444" }
         };
         
+        // --- PATCH v8.1 FINAL BALANCE ---
         const UNITS = {
-            miner: { hp: 300, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 }, 
-            sword: { hp: 100, dmg: 20, range: 45, speed: 5.0, cost: 100, color: '#fff', attackSpeed: 60, width: 20 },
-            spear: { hp: 280, dmg: 18, range: 90, speed: 1.0, cost: 300, color: '#fbbf24', attackSpeed: 80, width: 25 },
-            archer: { hp: 60, dmg: 8, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true },
+            miner: { hp: 300, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 }, // Miner 300 HP
+            sword: { hp: 100, dmg: 20, range: 45, speed: 5.0, cost: 100, color: '#fff', attackSpeed: 60, width: 20 }, // Sword Speed 5.0
+            spear: { hp: 280, dmg: 18, range: 90, speed: 1.0, cost: 300, color: '#fbbf24', attackSpeed: 80, width: 25 }, // Spear HP 280
+            archer: { hp: 60, dmg: 8, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true }, // DMG 8
             wizard: { hp: 150, dmg: 60, range: 300, speed: 1.0, cost: 350, color: '#9333ea', attackSpeed: 120, width: 20, isAoE: true }
         };
 
@@ -265,6 +264,7 @@
             range(min, max) { return min + this.next() * (max - min); }
         }
 
+        // --- AUDIO MANAGER ---
         const audioManager = {
             hasStarted: false,
             play(id) {
@@ -290,6 +290,7 @@
             }
         };
 
+        // --- VISUAL EFFECTS MANAGER ---
         class FXSystem {
             constructor() {
                 this.canvas = document.getElementById('effect-canvas');
@@ -324,60 +325,33 @@
             }
             update() {
                 const MAX_PARTICLES = 200; 
-
-                if (this.type === 'victory') {
-                    if(this.particles.length < MAX_PARTICLES) {
-                        this.particles.push({
-                            x: Math.random() * this.canvas.width,
-                            y: -20,
-                            vx: (Math.random() - 0.5) * 5,
-                            vy: 2 + Math.random() * 5,
-                            color: `hsl(${Math.random()*360}, 100%, 50%)`,
-                            rotation: Math.random() * 360,
-                            vRot: (Math.random() - 0.5) * 10
-                        });
-                    }
-                } else if (this.type === 'defeat') {
-                    if(this.particles.length < MAX_PARTICLES) {
-                         this.particles.push({
-                            x: Math.random() * this.canvas.width,
-                            y: -50,
-                            vx: 1, 
-                            vy: 15 + Math.random() * 10,
-                            len: 20 + Math.random() * 20
-                        });
-                    }
+                if (this.type === 'victory' && this.particles.length < MAX_PARTICLES) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width, y: -20,
+                        vx: (Math.random() - 0.5) * 5, vy: 2 + Math.random() * 5,
+                        color: `hsl(${Math.random()*360}, 100%, 50%)`, rotation: Math.random() * 360, vRot: (Math.random() - 0.5) * 10
+                    });
+                } else if (this.type === 'defeat' && this.particles.length < MAX_PARTICLES) {
+                     this.particles.push({ x: Math.random() * this.canvas.width, y: -50, vx: 1, vy: 15 + Math.random() * 10, len: 20 + Math.random() * 20 });
                 }
-
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     const p = this.particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
+                    p.x += p.vx; p.y += p.vy;
                     if(p.rotation) p.rotation += p.vRot;
-                    if (p.y > this.canvas.height) {
-                        this.particles.splice(i, 1);
-                    }
+                    if (p.y > this.canvas.height) this.particles.splice(i, 1);
                 }
             }
             draw() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 if (this.type === 'victory') {
                     this.particles.forEach(p => {
-                        this.ctx.save();
-                        this.ctx.translate(p.x, p.y);
-                        this.ctx.rotate(p.rotation * Math.PI / 180);
-                        this.ctx.fillStyle = p.color;
-                        this.ctx.fillRect(-5, -5, 10, 10);
-                        this.ctx.restore();
+                        this.ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180);
+                        this.ctx.fillStyle = p.color; ctx.fillRect(-5, -5, 10, 10); ctx.restore();
                     });
                 } else if (this.type === 'defeat') {
-                    this.ctx.strokeStyle = "rgba(174, 194, 224, 0.5)";
-                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeStyle = "rgba(174, 194, 224, 0.5)"; this.ctx.lineWidth = 2;
                     this.ctx.beginPath();
-                    this.particles.forEach(p => {
-                        this.ctx.moveTo(p.x, p.y);
-                        this.ctx.lineTo(p.x + p.vx, p.y + p.len);
-                    });
+                    this.particles.forEach(p => { this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x + p.vx, p.y + p.len); });
                     this.ctx.stroke();
                 }
             }
@@ -385,7 +359,7 @@
         
         const fx = new FXSystem();
 
-        // CLASS LOBBY SYSTEM (DEFINED FIRST)
+        // CLASS LOBBY SYSTEM DEFINED FIRST
         class LobbySystem {
             constructor() { 
                 this.unsubscribeGame = null; 
@@ -402,10 +376,7 @@
                 try {
                     await this.authenticate();
                     this.listenToRoomList();
-                    // AUTO PLAY LOBBY MUSIC ON FIRST CLICK
-                    window.addEventListener('click', () => {
-                        audioManager.init();
-                    }, { once: true });
+                    window.addEventListener('click', () => { audioManager.init(); }, { once: true });
                 } catch (e) { console.error("Auth failed:", e); }
             }
 
@@ -573,13 +544,11 @@
                 if(this.unsubscribeGame) this.unsubscribeGame(); if(this.unsubscribeCommands) this.unsubscribeCommands();
                 document.getElementById('lobby-modal').style.display = 'flex';
                 document.getElementById('menu-waiting').style.display = 'none'; document.getElementById('menu-start').style.display = 'block';
-                // REPLAY LOBBY MUSIC
                 audioManager.play('lobby-music');
             }
         }
 
-        // CLASS GAME ENGINE (DEFINED AFTER LOBBY TO FIX REFERENCE ORDER IF NEEDED, BUT JS HOISTING DOESN'T APPLY TO CLASSES. 
-        // INSTANTIATION MUST HAPPEN AFTER BOTH ARE DEFINED)
+        // CLASS GAME ENGINE
         class StickmanGame {
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
@@ -635,18 +604,17 @@
                 this.mineLeft = { x: dist, y: GROUND_Y, w: 80, h: 60, team: 'host' };
                 this.mineRight = { x: CANVAS_WIDTH - dist, y: GROUND_Y, w: 80, h: 60, team: 'guest' };
                 this.gameOver = false;
-                this.isSinglePlayer = false; // Reset SP flag
+                
                 this.frameCount = 0;
                 document.getElementById('end-game-screen').style.display = 'none';
                 document.getElementById('controls-panel').style.display = 'none';
                 document.getElementById('income-container').innerHTML = '';
                 document.getElementById('btn-surrender').style.display = 'none';
-                
-                // Show Lobby by default
                 document.getElementById('lobby-modal').style.display = 'flex';
             }
 
             start() {
+                this.reset(); 
                 this.gold = 200; this.aiGold = 200; 
                 this.inputEnabled = false; 
                 document.getElementById('controls-panel').style.display = 'flex';
@@ -714,7 +682,7 @@
                 this.frameCount++;
                 
                 if (this.frameCount % 180 === 0) { 
-                    // MECHANIC: EMERGENCY FUNDS & OVERDRIVE
+                    // MECHANIC: EMERGENCY FUNDS
                     const hostUnits = this.units.filter(u => u.team === 'host').length;
                     const hostBoost = (hostUnits === 0 && this.gold < 150); 
                     const hostIncome = hostBoost ? 15 : 5;
@@ -988,22 +956,34 @@
                 const isOverdrive = castleObj.overdrive;
 
                 ctx.save(); ctx.translate(x, GROUND_Y);
+                // Base - Trapezoid
                 ctx.fillStyle = '#4b5563'; 
                 ctx.beginPath();
-                ctx.moveTo(-50, 0); ctx.lineTo(-40, -120); ctx.lineTo(40, -120); ctx.lineTo(50, 0); ctx.fill();
+                ctx.moveTo(-50, 0); 
+                ctx.lineTo(-40, -120); 
+                ctx.lineTo(40, -120); 
+                ctx.lineTo(50, 0); 
+                ctx.fill();
 
+                // Tower Block
                 ctx.fillStyle = isOverdrive ? '#7f1d1d' : '#374151'; // Red if angry
                 ctx.fillRect(-30, -160, 60, 40);
 
+                // Battlements
                 ctx.fillStyle = '#1f2937';
-                ctx.fillRect(-35, -170, 15, 10); ctx.fillRect(-7, -170, 14, 10); ctx.fillRect(20, -170, 15, 10);
+                ctx.fillRect(-35, -170, 15, 10);
+                ctx.fillRect(-7, -170, 14, 10);
+                ctx.fillRect(20, -170, 15, 10);
 
+                // Team Banner
                 ctx.fillStyle = isHost ? '#2563eb' : '#dc2626'; 
                 ctx.fillRect(-20, -150, 40, 60);
 
+                // Statue Head on Top
                 ctx.fillStyle = '#4b5563';
                 ctx.beginPath(); ctx.arc(0, -200, 30, 0, Math.PI*2); ctx.fill();
                 
+                // Statue Arms/Weapons based on team (Decoration)
                 ctx.strokeStyle = '#374151'; ctx.lineWidth = 4;
                 ctx.beginPath(); ctx.moveTo(-35, -180); ctx.lineTo(-60, -120); ctx.stroke(); // Left arm
                 ctx.beginPath(); ctx.moveTo(35, -180); ctx.lineTo(60, -120); ctx.stroke(); // Right arm
@@ -1015,9 +995,10 @@
                     ctx.restore();
                 }
 
+                // Archer behind tower
                 ctx.save(); 
-                const archerOffset = isHost ? -30 : 30;
-                ctx.translate(archerOffset, -150); 
+                const archerOffset = isHost ? -20 : 20;
+                ctx.translate(archerOffset, -130); 
                 const dir = isHost ? 1 : -1; ctx.scale(dir, 1);
                 ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI*2); ctx.fill(); 
                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10); ctx.stroke(); 
@@ -1031,79 +1012,164 @@
             }
 
             drawStickmanNew(u) {
+                // Determine facing direction
                 const myCastle = u.team === 'host' ? this.castleLeft : this.castleRight;
                 const myMine = u.team === 'host' ? this.mineLeft : this.mineRight;
                 
-                let facingDir = u.team === 'host' ? 1 : -1; 
+                let facingDir = u.team === 'host' ? 1 : -1; // Default
+                
+                // FIX: Miner turning body to face castle
                 if (u.type === 'miner' && u.minerState === 'to_castle') {
+                    // If team host (left), castle is at left. So face left (-1).
+                    // If team guest (right), castle is at right. So face right (1).
                     facingDir = u.team === 'host' ? -1 : 1; 
                 }
 
-                const ctx = this.ctx; const x = u.x; const y = GROUND_Y;
+                const ctx = this.ctx; 
+                const x = u.x; 
+                const y = GROUND_Y;
                 const teamColor = u.team === 'host' ? '#3b82f6' : '#ef4444';
+                
                 const showBag = u.type === 'miner' && u.hasGold;
                 const bobY = u.state === 'walk' ? Math.abs(Math.sin(u.animFrame * 2)) * 3 : 0;
                 
+                // Draw everything assuming "Facing Right" (scale handles flip)
                 ctx.save();
                 ctx.translate(x, y);
-                ctx.scale(facingDir, 1); 
+                ctx.scale(facingDir, 1); // FLIP CONTEXT HERE
 
+                // FIX: Wizard Upright
                 const isWizard = u.type === 'wizard';
+                
+                // Relative Coords (x=0 is hip center)
                 const headY = -70 - bobY;
                 const hipY = -45 - bobY;
 
                 ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
 
+                // Legs (Standard right-facing logic)
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2+Math.PI)*0.5:0));
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2)*0.5:0));
 
-                ctx.strokeStyle = '#111'; ctx.beginPath(); ctx.moveTo(0, hipY); 
-                if (isWizard) ctx.lineTo(0, headY); else ctx.quadraticCurveTo(5, hipY - 20, 2, headY); 
+                // Body (Slight Spine Curve for runners, Straight for Wizard)
+                ctx.strokeStyle = '#111'; 
+                ctx.beginPath(); 
+                ctx.moveTo(0, hipY); 
+                if (isWizard) {
+                    ctx.lineTo(0, headY); // Straight spine
+                } else {
+                    ctx.quadraticCurveTo(5, hipY - 20, 2, headY); // Runner hunch
+                }
                 ctx.stroke();
 
-                if (showBag) { ctx.fillStyle = '#facc15'; ctx.strokeStyle='#854d0e'; ctx.lineWidth=1; ctx.beginPath(); ctx.rect(-12, hipY - 20, 12, 12); ctx.fill(); ctx.stroke(); }
+                if (showBag) { 
+                    ctx.fillStyle = '#facc15'; ctx.strokeStyle='#854d0e'; ctx.lineWidth=1; 
+                    ctx.beginPath(); ctx.rect(-12, hipY - 20, 12, 12); ctx.fill(); ctx.stroke(); 
+                }
+
+                // Arms
                 let armAngle = Math.PI/4;
-                if (u.type === 'wizard') armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
-                else armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
+                if (u.type === 'wizard') {
+                     // ATTACK FIX: Staff Up/Forward (-45 deg) for summoning
+                     armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
+                }
+                else {
+                    armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
+                }
+
+                // Back Arm
                 this.drawArm(ctx, 0, headY+5, armAngle, u.type, false);
+                // Front Arm
                 this.drawArm(ctx, 0, headY+5, armAngle-0.2, u.type, true);
 
-                ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(isWizard ? 0 : 2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                // Head
+                ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; 
+                ctx.beginPath(); ctx.arc(isWizard ? 0 : 2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                 
-                if (isWizard) { ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.moveTo(-5, headY+5); ctx.lineTo(5, headY+5); ctx.lineTo(0, headY+15); ctx.fill(); }
+                // Add Wizard Beard
+                if (isWizard) {
+                    ctx.fillStyle = '#eee';
+                    ctx.beginPath(); ctx.moveTo(-5, headY+5); ctx.lineTo(5, headY+5); ctx.lineTo(0, headY+15); ctx.fill();
+                }
 
-                if (u.type === 'miner') { ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(-10, headY-12, 24, 6); ctx.fill(); ctx.beginPath(); ctx.rect(-6, headY-18, 16, 8); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); }
-                else if (u.type === 'wizard') { ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-15, headY-5); ctx.lineTo(15, headY-5); ctx.lineTo(0, headY-35); ctx.fill(); }
-                else { ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); }
+                // Accessories
+                if (u.type === 'miner') { 
+                    ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(-10, headY-12, 24, 6); ctx.fill(); 
+                    ctx.beginPath(); ctx.rect(-6, headY-18, 16, 8); ctx.fill(); 
+                    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); 
+                }
+                else if (u.type === 'wizard') { 
+                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-15, headY-5); ctx.lineTo(15, headY-5); ctx.lineTo(0, headY-35); ctx.fill(); 
+                }
+                else { 
+                    ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); 
+                }
                 
-                ctx.restore(); 
+                ctx.restore(); // Restore flip
 
-                ctx.fillStyle = 'red'; ctx.fillRect(x-15, y-100, 30, 4); ctx.fillStyle = '#0f0'; ctx.fillRect(x-15, y-100, 30*(u.hp/u.stats.hp), 4);
+                // HP Bar (Unflipped)
+                ctx.fillStyle = 'red'; ctx.fillRect(x-15, y-100, 30, 4); 
+                ctx.fillStyle = '#0f0'; ctx.fillRect(x-15, y-100, 30*(u.hp/u.stats.hp), 4);
             }
 
+            // Simplified DrawLeg (Always assumes facing right)
             drawLeg(ctx, hX, hY, a) {
+                // FIX IDLE LEGS: If 'a' is near 0 (stopped), reduce knee bend drastically
                 const bend = Math.abs(a) < 0.1 ? 0.1 : 0.5;
-                const kX = hX + (Math.sin(a) * 20); const kY = hY + Math.cos(a) * 20;
-                const fX = kX + (Math.sin(a - bend) * 22); const fY = kY + Math.cos(a - bend) * 22;
-                ctx.strokeStyle='#000'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
+                
+                const kX = hX + (Math.sin(a) * 20); 
+                const kY = hY + Math.cos(a) * 20;
+                const fX = kX + (Math.sin(a - bend) * 22); 
+                const fY = kY + Math.cos(a - bend) * 22;
+                ctx.strokeStyle='#000'; ctx.lineWidth=6;
+                ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
             }
             
+            // Simplified DrawArm
             drawArm(ctx, sX, sY, a, type, front) {
                 let fa = a; if(type==='archer') fa = -0.2;
                 if(type==='miner' && !front) return; 
+                
                 const eX = sX + Math.sin(fa)*15; const eY = sY + Math.cos(fa)*15;
                 const hX = eX + Math.sin(fa+0.5)*15; const hY = eY + Math.cos(fa+0.5)*15;
-                ctx.strokeStyle='#000'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.lineTo(hX, hY); ctx.stroke();
+                
+                ctx.strokeStyle='#000'; ctx.lineWidth=6; 
+                ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.lineTo(hX, hY); ctx.stroke();
+                
                 if (front) {
                     ctx.save(); ctx.translate(hX, hY); 
-                    if (type === 'miner') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#a16207'; ctx.fillRect(-2, -20, 4, 30); ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.lineTo(0, -10); ctx.fill(); }
-                    else if (type === 'wizard') { ctx.rotate(fa - Math.PI/2); ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -40, 4, 50); ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -40, 6, 0, Math.PI*2); ctx.fill(); }
-                    else if (type === 'sword') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); }
-                    else if (type === 'spear') { ctx.rotate(Math.PI/2 + 0.2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); }
-                    else if (type === 'archer') { ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); }
+                    // Items drawn relative to hand
+                    if (type === 'miner') { 
+                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#a16207'; ctx.fillRect(-2, -20, 4, 30); 
+                        ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.lineTo(0, -10); ctx.fill(); 
+                    }
+                    else if (type === 'wizard') { 
+                        // Staff points forward/up
+                        ctx.rotate(fa - Math.PI/2); 
+                        ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -50, 4, 60); // Longer staff
+                        ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -50, 8, 0, Math.PI*2); ctx.fill(); // Bigger orb
+                    }
+                    else if (type === 'sword') { 
+                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); 
+                        ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); 
+                    }
+                    else if (type === 'spear') { 
+                        // Spear Stab Angle
+                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); 
+                        ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); 
+                        
+                        // Shield (Back Hand Only?) No, Front hand holds Spear. 
+                        // Shield should be drawn separately or on back arm. Simplified here.
+                    }
+                    else if (type === 'archer') { 
+                        ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); 
+                        ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); 
+                    }
                     ctx.restore();
                 } else if (type === 'spear') {
-                    ctx.save(); ctx.translate(hX, hY); ctx.rotate(0.2);
+                    // Shield on Back Arm
+                    ctx.save(); ctx.translate(hX, hY);
+                    ctx.rotate(0.2);
                     ctx.fillStyle = '#b45309'; ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2;
                     ctx.beginPath(); ctx.arc(0, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                     ctx.restore();
@@ -1135,12 +1201,23 @@
             }
         } 
 
+        // INSTANTIATION
         const lobby = new LobbySystem();
-        const game = new StickmanGame(); // INSTANTIATE GAME BEFORE USING
-        window.game = game; // EXPOSE TO GLOBAL FOR HTML ONCLICK
-        window.lobby = lobby;
+        const game = new StickmanGame();
         
+        window.lobby = lobby;
+        window.game = game;
+        
+        // Init
         lobby.init(); 
+        
+        // AUTO PLAY AUDIO ON FIRST INTERACTION
+        window.addEventListener('click', () => {
+            audioManager.init();
+        }, { once: true });
+
+        // FORCE LOBBY VISIBLE ON LOAD
+        document.getElementById('lobby-modal').style.display = 'flex';
 
     </script>
 </body>
