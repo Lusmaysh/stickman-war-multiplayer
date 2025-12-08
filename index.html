@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="screen-orientation" content="landscape">
-    <title>Stickman Battle: Anim Fix v6.2</title>
+    <title>Stickman Battle: Comeback Update v6.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -123,7 +123,13 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
-    <div id="version-tag">ver 6.2 (Anim Polish)</div>
+    <div id="version-tag">ver 6.4 (Comeback Update)</div>
+
+    <!-- AUDIO ELEMENT (Online Source for testing) -->
+    <!-- Jika ingin pakai file sendiri: ganti src dengan "Field of Memories.mp3" setelah download -->
+    <audio id="game-music" loop>
+        <source src="v4.www-y2mate.blog - Field of Memories (320 KBps).mp3" type="audio/ogg">
+    </audio>
 
     <!-- Rotate Overlay -->
     <div id="rotate-overlay">
@@ -157,11 +163,12 @@
         <div id="income-container"></div>
 
         <div class="controls interactive" id="controls-panel" style="display:none;">
+            <!-- Updated Costs in UI -->
             <button class="unit-btn" onclick="game.trySpawn('miner')" id="btn-miner"><span class="unit-key">1</span><span class="unit-icon">⛏️</span><span class="unit-name">Miner</span><span class="unit-cost">100 G</span></button>
             <div style="width: 5px;"></div>
-            <button class="unit-btn" onclick="game.trySpawn('sword')" id="btn-sword"><span class="unit-key">2</span><span class="unit-icon">⚔️</span><span class="unit-name">Sword</span><span class="unit-cost">125 G</span></button>
+            <button class="unit-btn" onclick="game.trySpawn('sword')" id="btn-sword"><span class="unit-key">2</span><span class="unit-icon">⚔️</span><span class="unit-name">Sword</span><span class="unit-cost">100 G</span></button>
             <button class="unit-btn" onclick="game.trySpawn('archer')" id="btn-archer"><span class="unit-key">3</span><span class="unit-icon">🏹</span><span class="unit-name">Archer</span><span class="unit-cost">200 G</span></button>
-             <button class="unit-btn" onclick="game.trySpawn('spear')" id="btn-spear"><span class="unit-key">4</span><span class="unit-icon">🛡️</span><span class="unit-name">Spear</span><span class="unit-cost">250 G</span></button>
+             <button class="unit-btn" onclick="game.trySpawn('spear')" id="btn-spear"><span class="unit-key">4</span><span class="unit-icon">🛡️</span><span class="unit-name">Spear</span><span class="unit-cost">300 G</span></button>
             <button class="unit-btn" onclick="game.trySpawn('wizard')" id="btn-wizard"><span class="unit-key">5</span><span class="unit-icon">🧙‍♂️</span><span class="unit-name">Wizard</span><span class="unit-cost">350 G</span></button>
         </div>
     </div>
@@ -182,7 +189,7 @@
     <div id="lobby-modal">
         <div class="modal-content">
             <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
-            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V6.2</p>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V6.4</p>
             
             <div id="menu-start">
                 <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
@@ -264,11 +271,12 @@
             SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, towerRange: 400, castleHp: 500, incomeMult: 1, color: "#ef4444" }
         };
         
+        // --- PATCH v6.3 BALANCE ---
         const UNITS = {
-            miner: { hp: 50, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 },
-            sword: { hp: 80, dmg: 20, range: 45, speed: 1.5, cost: 125, color: '#fff', attackSpeed: 60, width: 20 },
-            spear: { hp: 500, dmg: 18, range: 90, speed: 1.0, cost: 250, color: '#fbbf24', attackSpeed: 80, width: 25 },
-            archer: { hp: 70, dmg: 25, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true },
+            miner: { hp: 150, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 }, // HP BUFF
+            sword: { hp: 100, dmg: 20, range: 45, speed: 1.5, cost: 100, color: '#fff', attackSpeed: 60, width: 20 }, // COST DOWN, HP BUFF
+            spear: { hp: 320, dmg: 18, range: 90, speed: 1.0, cost: 300, color: '#fbbf24', attackSpeed: 80, width: 25 }, // HP NERF, COST UP
+            archer: { hp: 60, dmg: 12, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true }, // DMG NERF
             wizard: { hp: 150, dmg: 60, range: 300, speed: 1.0, cost: 350, color: '#9333ea', attackSpeed: 120, width: 20, isAoE: true }
         };
 
@@ -430,8 +438,9 @@
                 fx.stop(); // Stop any effects
                 
                 const hp = this.currentModifier.castleHp;
-                this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140 };
-                this.castleRight = { x: CANVAS_WIDTH - 120, hp: hp, maxHp: hp, team: 'guest', fireTimer: 0, w: 80, h: 140 };
+                // Overdrive Flag
+                this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140, overdrive: false };
+                this.castleRight = { x: CANVAS_WIDTH - 120, hp: hp, maxHp: hp, team: 'guest', fireTimer: 0, w: 80, h: 140, overdrive: false };
                 const dist = this.currentModifier.mineDist;
                 this.mineLeft = { x: dist, y: GROUND_Y, w: 80, h: 60, team: 'host' };
                 this.mineRight = { x: CANVAS_WIDTH - dist, y: GROUND_Y, w: 80, h: 60, team: 'guest' };
@@ -451,6 +460,14 @@
                 document.getElementById('controls-panel').style.display = 'flex';
                 this.updateUI(); 
                 this.showStartPopup();
+                
+                // START MUSIC
+                const music = document.getElementById('game-music');
+                if (music) {
+                    music.volume = 0.5;
+                    music.play().catch(e => console.log("Audio autoplay blocked, waiting for interaction"));
+                }
+
                 const badge = document.getElementById('modifier-badge');
                 badge.style.display = 'block';
                 badge.innerText = this.currentModifier.name;
@@ -509,7 +526,25 @@
                 this.frameCount++;
                 
                 if (this.frameCount % 180 === 0) { 
-                    this.gold += 5; this.aiGold += 5; this.updateUI(); 
+                    // COMEBACK MECHANIC: EMERGENCY FUNDS
+                    // If Host has < 150g and 0 units, give 3x income
+                    const hostUnits = this.units.filter(u => u.team === 'host').length;
+                    const hostBoost = (hostUnits === 0 && this.gold < 150); 
+                    const hostIncome = hostBoost ? 15 : 5;
+                    
+                    // Same for AI/Guest
+                    const guestUnits = this.units.filter(u => u.team === 'guest').length;
+                    const guestBoost = (guestUnits === 0 && this.aiGold < 150);
+                    const guestIncome = guestBoost ? 15 : 5;
+
+                    this.gold += hostIncome; 
+                    this.aiGold += guestIncome; 
+                    
+                    // Show popup for boost
+                    if(hostBoost && (playerRole === 'host' || this.isSinglePlayer)) {
+                        this.showPopupText("BANTUAN DANA!", 200, "#4ade80");
+                    }
+                    this.updateUI(); 
                 }
 
                 if (this.isSinglePlayer && playerRole === 'host') this.updateAI();
@@ -613,13 +648,29 @@
 
             updateCastleDefense(castle, enemyTeam) {
                 castle.fireTimer++;
-                const fireRate = this.currentModifier.towerRate * 2; 
+                
+                // --- COMEBACK MECHANIC: CASTLE OVERDRIVE ---
+                // If enemy is close (250px), triple the fire rate
+                let isOverdrive = false;
+                let closestDist = Infinity;
+                let closest = null;
+                
+                this.units.forEach(u => { 
+                    if (u.team === enemyTeam && !u.dead) { 
+                        const dist = Math.abs(u.x - castle.x); 
+                        if(dist < 250) isOverdrive = true;
+                        if (dist < closestDist) { closestDist = dist; closest = u; } 
+                    } 
+                });
+
+                castle.overdrive = isOverdrive;
+                const baseRate = this.currentModifier.towerRate * 2; // Normal 60Hz rate
+                const fireRate = isOverdrive ? 20 : baseRate; // 20 frames = 0.3s (Fast!)
                 const range = this.currentModifier.towerRange || 400;
 
-                if (castle.fireTimer >= fireRate) { 
-                    let closest = null, minDist = range;
-                    this.units.forEach(u => { if (u.team === enemyTeam && !u.dead) { const dist = Math.abs(u.x - castle.x); if (dist < minDist) { minDist = dist; closest = u; } } });
-                    if (closest) { castle.fireTimer = 0; this.fireArrow(castle.x, GROUND_Y - 200, closest, CASTLE_DMG, castle.team); }
+                if (castle.fireTimer >= fireRate && closest && closestDist <= range) { 
+                    castle.fireTimer = 0; 
+                    this.fireArrow(castle.x, GROUND_Y - 200, closest, CASTLE_DMG, castle.team); 
                 }
             }
 
@@ -646,12 +697,22 @@
 
             addIncome(amount, team) {
                 const finalAmount = amount * this.currentModifier.incomeMult;
-                const el = document.createElement('div'); el.className = 'income-text'; el.innerText = `+${finalAmount} G`;
-                el.style.left = (team === 'host' ? '10%' : '85%'); el.style.top = '40%';
-                document.getElementById('income-container').appendChild(el); setTimeout(() => el.remove(), 1000);
+                this.showPopupText(`+${finalAmount} G`, team === 'host' ? 150 : CANVAS_WIDTH-150, "#fbbf24");
+
                 if (this.isSinglePlayer) { if (team === 'host') this.gold += finalAmount; else this.aiGold += finalAmount; } 
                 else if (team === playerRole) this.gold += finalAmount;
                 this.updateUI();
+            }
+            
+            showPopupText(text, x, color) {
+                const el = document.createElement('div'); 
+                el.className = 'income-text'; el.innerText = text;
+                el.style.color = color;
+                // Convert game X to screen percent roughly
+                const pct = (x / CANVAS_WIDTH) * 100;
+                el.style.left = pct + '%'; el.style.top = '40%';
+                document.getElementById('income-container').appendChild(el); 
+                setTimeout(() => el.remove(), 1000);
             }
 
             performAttack(attacker, target) {
@@ -741,9 +802,12 @@
                 ctx.restore();
             }
 
-            // REDESIGNED CASTLE (TRAPEZOID + STATUE)
             drawCastle(x, team) {
                 const ctx = this.ctx; const isHost = team === 'host';
+                // CHECK OVERDRIVE
+                const castleObj = isHost ? this.castleLeft : this.castleRight;
+                const isOverdrive = castleObj.overdrive;
+
                 ctx.save(); ctx.translate(x, GROUND_Y);
                 // Base - Trapezoid
                 ctx.fillStyle = '#4b5563'; 
@@ -755,7 +819,7 @@
                 ctx.fill();
 
                 // Tower Block
-                ctx.fillStyle = '#374151';
+                ctx.fillStyle = isOverdrive ? '#7f1d1d' : '#374151'; // Red if angry
                 ctx.fillRect(-30, -160, 60, 40);
 
                 // Battlements
@@ -778,7 +842,7 @@
                 ctx.beginPath(); ctx.moveTo(35, -180); ctx.lineTo(60, -120); ctx.stroke(); // Right arm
 
                 if (team === playerRole) {
-                    ctx.save(); ctx.translate(0, -320); 
+                    ctx.save(); ctx.translate(0, -260); 
                     ctx.fillStyle = '#facc15'; ctx.font = 'bold 24px monospace'; ctx.textAlign = 'center'; ctx.shadowColor = 'black'; ctx.shadowBlur = 4; ctx.fillText("YOU", 0, 0);
                     ctx.beginPath(); ctx.moveTo(-10, 10); ctx.lineTo(10, 10); ctx.lineTo(0, 25); ctx.fill();
                     ctx.restore();
@@ -860,11 +924,7 @@
                 let armAngle = Math.PI/4;
                 if (u.type === 'wizard') {
                      // ATTACK FIX: Staff Up/Forward (-45 deg) for summoning
-                     armAngle = u.state === 'attack' ? -Math.PI/2 - 0.5 : 0.2; 
-                }
-                else if (u.type === 'spear') {
-                    // STAB: Piston motion
-                    armAngle = u.state === 'attack' ? Math.sin(u.animFrame * 5) * 0.5 : Math.PI/4;
+                     armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
                 }
                 else {
                     armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
@@ -892,12 +952,7 @@
                     ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); 
                 }
                 else if (u.type === 'wizard') { 
-                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-15, headY-5); ctx.lineTo(15, headY-5); ctx.lineTo(0, headY-35); ctx.fill(); 
-                }
-                else if (u.type === 'spear') {
-                    // Spartan Helmet
-                    ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(-2, headY-15); ctx.lineTo(12, headY-5); ctx.lineTo(2, headY+5); ctx.fill();
-                    ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.rect(-4, headY-20, 8, 10); ctx.fill(); // Crest
+                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-13, headY-5); ctx.lineTo(17, headY-5); ctx.lineTo(2, headY-35); ctx.fill(); 
                 }
                 else { 
                     ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); 
