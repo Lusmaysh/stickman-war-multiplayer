@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="screen-orientation" content="landscape">
-    <title>Stickman Battle: Comeback Update v6.4</title>
+    <title>Stickman Battle: Final Fix v6.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -44,13 +44,10 @@
         #gamemode-popup { display: none; background: rgba(0,0,0,0.4); pointer-events: none; flex-direction: column; animation: fadeOut 0.5s ease-in 2.5s forwards; }
         
         #effect-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
-
         .modal-content { background: #1f2937; padding: 1.5rem; border-radius: 1rem; text-align: center; max-width: 90%; width: 400px; border: 1px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
         .mode-title { font-size: 2.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px currentColor; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .mode-desc { font-size: 1.2rem; color: #e5e7eb; margin-top: 8px; text-shadow: 2px 2px 4px black; }
         .end-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10; }
-        
         .gold-display { position: absolute; top: 60px; left: 15px; font-size: 20px; color: #fbbf24; font-weight: bold; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; border: 1px solid #fbbf24; }
         .income-text { position: absolute; color: #fbbf24; font-weight: bold; font-size: 18px; pointer-events: none; animation: floatUp 1s forwards; text-shadow: 1px 1px 0 #000; }
         
@@ -65,43 +62,20 @@
         #btn-surrender:active { transform: scale(0.9); background: #ef4444; }
 
         @media (max-height: 500px) {
-            .hud-top { padding: 5px 10px; }
-            .bar-container { height: 10px; border-width: 1px; }
-            .team-badge { font-size: 9px; margin-bottom: 1px; }
-            .gold-display { top: 40px; left: 10px; font-size: 14px; padding: 2px 8px; border-width: 1px; }
-            #modifier-badge { font-size: 10px; padding: 2px 8px; margin-top: 0; }
-            .vs-text { font-size: 1rem !important; }
-            .controls { padding: 2px; padding-bottom: 5px; gap: 3px; }
-            .unit-btn { width: 45px; height: 45px; border-radius: 6px; border-width: 1px; }
-            .unit-icon { font-size: 16px; margin-top: -2px; }
-            .unit-name { display: none; } 
-            .unit-cost { font-size: 8px; margin-top: -1px; }
-            .unit-key { display: none; }
-            .modal-content { padding: 1rem; width: 350px; }
-            .text-4xl { font-size: 1.5rem; }
-            .p-4 { padding: 0.5rem; }
-            .mb-6 { margin-bottom: 0.5rem; }
-            .text-2xl { font-size: 1.2rem; }
-            .mode-title { font-size: 1.8rem; }
-            .mode-desc { font-size: 0.9rem; }
-            .end-title { font-size: 2.5rem; }
+            .hud-top { padding: 5px 10px; } .bar-container { height: 10px; border-width: 1px; } .team-badge { font-size: 9px; margin-bottom: 1px; } .gold-display { top: 40px; left: 10px; font-size: 14px; padding: 2px 8px; border-width: 1px; } #modifier-badge { font-size: 10px; padding: 2px 8px; margin-top: 0; } .vs-text { font-size: 1rem !important; }
+            .controls { padding: 2px; padding-bottom: 5px; gap: 3px; } .unit-btn { width: 45px; height: 45px; border-radius: 6px; border-width: 1px; } .unit-icon { font-size: 16px; margin-top: -2px; } .unit-name { display: none; } .unit-cost { font-size: 8px; margin-top: -1px; } .unit-key { display: none; }
+            .modal-content { padding: 1rem; width: 350px; } .text-4xl { font-size: 1.5rem; } .p-4 { padding: 0.5rem; } .mb-6 { margin-bottom: 0.5rem; } .text-2xl { font-size: 1.2rem; } .mode-title { font-size: 1.8rem; } .mode-desc { font-size: 0.9rem; } .end-title { font-size: 2.5rem; }
             #btn-surrender { top: 80px; left: 15px; width: 32px; height: 32px; font-size: 16px; }
         }
 
-        #rotate-overlay { 
-            background: #000; z-index: 9999; display: none; flex-direction: column; text-align: center; color: white;
-        }
+        #rotate-overlay { background: #000; z-index: 9999; display: none; flex-direction: column; text-align: center; color: white; }
         .rotate-icon { font-size: 4rem; animation: rotatePhone 2s infinite; margin-bottom: 20px; }
         @keyframes rotatePhone { 0% { transform: rotate(0deg); } 25% { transform: rotate(-90deg); } 50% { transform: rotate(-90deg); } 75% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
-        @media screen and (orientation: portrait) {
-            #rotate-overlay { display: flex; }
-            #ui-layer, #lobby-modal { display: none !important; }
-        }
-        
+        @media screen and (orientation: portrait) { #rotate-overlay { display: flex; } #ui-layer, #lobby-modal { display: none !important; } }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
-
+        
         #room-list-container { margin-top: 10px; max-height: 180px; overflow-y: auto; background: #111827; border-radius: 8px; border: 1px solid #374151; text-align: left; }
         .room-item { padding: 8px 12px; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .room-item:hover { background: #1f2937; }
@@ -112,7 +86,6 @@
         .btn-join { padding: 4px 10px; font-size: 0.8rem; margin: 0; width: auto; background: #059669; color: white; border-radius: 4px; cursor: pointer; }
         .btn-join:hover { background: #047857; }
         .live-dot { height: 6px; width: 6px; background-color: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px #22c55e; animation: pulse 2s infinite; margin-right: 5px; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
         .btn { padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 8px; font-size: 0.9rem; transition: background 0.2s; }
         .btn-primary { background: #2563eb; color: white; }
@@ -123,12 +96,14 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
-    <div id="version-tag">ver 6.4 (Comeback Update)</div>
+    <div id="version-tag">ver 6.10 (Stable & Clean)</div>
 
-    <!-- AUDIO ELEMENT (Online Source for testing) -->
-    <!-- Jika ingin pakai file sendiri: ganti src dengan "Field of Memories.mp3" setelah download -->
+    <!-- AUDIO ELEMENTS -->
+    <audio id="lobby-music" loop>
+        <source src="Stick Empires - Main Theme.mp3" type="audio/mpeg">
+    </audio>
     <audio id="game-music" loop>
-        <source src="v4.www-y2mate.blog - Field of Memories (320 KBps).mp3" type="audio/ogg">
+        <source src="Field of Memories.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Rotate Overlay -->
@@ -163,7 +138,7 @@
         <div id="income-container"></div>
 
         <div class="controls interactive" id="controls-panel" style="display:none;">
-            <!-- Updated Costs in UI -->
+            <!-- Updated Costs (Reverted where requested) -->
             <button class="unit-btn" onclick="game.trySpawn('miner')" id="btn-miner"><span class="unit-key">1</span><span class="unit-icon">⛏️</span><span class="unit-name">Miner</span><span class="unit-cost">100 G</span></button>
             <div style="width: 5px;"></div>
             <button class="unit-btn" onclick="game.trySpawn('sword')" id="btn-sword"><span class="unit-key">2</span><span class="unit-icon">⚔️</span><span class="unit-name">Sword</span><span class="unit-cost">100 G</span></button>
@@ -178,7 +153,6 @@
         <p id="popup-desc" class="mode-desc">Standard Rules</p>
     </div>
 
-    <!-- End Game Screen with Canvas for Effects -->
     <div id="end-game-screen">
         <canvas id="effect-canvas"></canvas>
         <h1 id="end-title" class="end-title">VICTORY</h1>
@@ -189,7 +163,7 @@
     <div id="lobby-modal">
         <div class="modal-content">
             <h1 class="text-4xl font-black mb-2 text-blue-500 tracking-tighter" style="text-shadow: 0 0 20px rgba(37, 99, 235, 0.5);">STICK WAR</h1>
-            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V6.4</p>
+            <p class="text-gray-400 mb-6 text-sm uppercase tracking-widest">Multiplayer RTS V6.10</p>
             
             <div id="menu-start">
                 <button class="btn btn-primary" onclick="lobby.createGame()">⚔️ Buat Room (Host)</button>
@@ -249,7 +223,6 @@
             console.log("Firebase Connected via Project: " + firebaseConfig.projectId);
         } catch (e) { 
             console.error("Firebase Error:", e);
-            if (!window.location.host.includes('googleusercontent')) alert("Koneksi Database Gagal. Cek internet/config.");
         }
         
         let currentGameId = null;
@@ -271,12 +244,12 @@
             SUDDEN_DEATH: { name: "💀 SUDDEN DEATH", desc: "Kastil HP sangat tipis!", mineDist: 300, towerRate: 80, towerRange: 400, castleHp: 500, incomeMult: 1, color: "#ef4444" }
         };
         
-        // --- PATCH v6.3 BALANCE ---
+        // --- PATCH v6.10 BALANCE RESTORED ---
         const UNITS = {
-            miner: { hp: 150, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 }, // HP BUFF
-            sword: { hp: 100, dmg: 20, range: 45, speed: 1.5, cost: 100, color: '#fff', attackSpeed: 60, width: 20 }, // COST DOWN, HP BUFF
-            spear: { hp: 320, dmg: 18, range: 90, speed: 1.0, cost: 300, color: '#fbbf24', attackSpeed: 80, width: 25 }, // HP NERF, COST UP
-            archer: { hp: 60, dmg: 12, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true }, // DMG NERF
+            miner: { hp: 150, dmg: 0, range: 0, speed: 2.0, cost: 100, color: '#f59e0b', width: 20, isMiner: true, capacity: 70 }, // HP 150 (Tebal wajar)
+            sword: { hp: 100, dmg: 20, range: 45, speed: 3.2, cost: 100, color: '#fff', attackSpeed: 60, width: 20 }, // Speed normal, Cost murah
+            spear: { hp: 320, dmg: 18, range: 90, speed: 1.0, cost: 300, color: '#fbbf24', attackSpeed: 80, width: 25 }, // HP dikurangi dikit
+            archer: { hp: 70, dmg: 12, range: 400, speed: 1.3, cost: 200, color: '#10b981', attackSpeed: 70, width: 15, projectile: true }, // Damage dikurangi
             wizard: { hp: 150, dmg: 60, range: 300, speed: 1.0, cost: 350, color: '#9333ea', attackSpeed: 120, width: 20, isAoE: true }
         };
 
@@ -290,6 +263,33 @@
             }
             range(min, max) { return min + this.next() * (max - min); }
         }
+
+        // --- AUDIO MANAGER ---
+        const audioManager = {
+            hasStarted: false,
+            play(id) {
+                if(!this.hasStarted) return; // Wait for first interaction
+                const el = document.getElementById(id);
+                if(el) {
+                    el.volume = 0.4;
+                    if(el.currentTime > 0 && el.paused) el.currentTime = 0;
+                    el.play().catch(e => {});
+                }
+            },
+            stop(id) {
+                const el = document.getElementById(id);
+                if(el) { el.pause(); el.currentTime = 0; }
+            },
+            switch(fromId, toId) {
+                this.stop(fromId);
+                this.play(toId);
+            },
+            init() {
+                this.hasStarted = true;
+                // Try playing lobby music immediately on first click
+                this.play('lobby-music');
+            }
+        };
 
         // --- VISUAL EFFECTS MANAGER ---
         class FXSystem {
@@ -325,63 +325,34 @@
                 requestAnimationFrame(() => this.loop());
             }
             update() {
-                if (this.type === 'victory') {
-                    if(this.particles.length < 200) {
-                        this.particles.push({
-                            x: Math.random() * this.canvas.width,
-                            y: -20,
-                            vx: (Math.random() - 0.5) * 5,
-                            vy: 2 + Math.random() * 5,
-                            color: `hsl(${Math.random()*360}, 100%, 50%)`,
-                            rotation: Math.random() * 360,
-                            vRot: (Math.random() - 0.5) * 10
-                        });
-                    }
-                } else if (this.type === 'defeat') {
-                    if(this.particles.length < 500) {
-                         this.particles.push({
-                            x: Math.random() * this.canvas.width,
-                            y: -50,
-                            vx: 1, 
-                            vy: 15 + Math.random() * 10,
-                            len: 20 + Math.random() * 20
-                        });
-                    }
-                    if(Math.random() < 0.01) {
-                        this.ctx.fillStyle = "rgba(255,255,255,0.3)";
-                        this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
-                    }
+                const MAX_PARTICLES = 150; 
+                if (this.type === 'victory' && this.particles.length < MAX_PARTICLES) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width, y: -20,
+                        vx: (Math.random() - 0.5) * 5, vy: 2 + Math.random() * 5,
+                        color: `hsl(${Math.random()*360}, 100%, 50%)`, rotation: Math.random() * 360, vRot: (Math.random() - 0.5) * 10
+                    });
+                } else if (this.type === 'defeat' && this.particles.length < MAX_PARTICLES) {
+                     this.particles.push({ x: Math.random() * this.canvas.width, y: -50, vx: 1, vy: 15 + Math.random() * 10, len: 20 + Math.random() * 20 });
                 }
-
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     const p = this.particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
+                    p.x += p.vx; p.y += p.vy;
                     if(p.rotation) p.rotation += p.vRot;
-                    if (p.y > this.canvas.height) {
-                        this.particles.splice(i, 1);
-                    }
+                    if (p.y > this.canvas.height) this.particles.splice(i, 1);
                 }
             }
             draw() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 if (this.type === 'victory') {
                     this.particles.forEach(p => {
-                        this.ctx.save();
-                        this.ctx.translate(p.x, p.y);
-                        this.ctx.rotate(p.rotation * Math.PI / 180);
-                        this.ctx.fillStyle = p.color;
-                        this.ctx.fillRect(-5, -5, 10, 10);
-                        this.ctx.restore();
+                        this.ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180);
+                        this.ctx.fillStyle = p.color; ctx.fillRect(-5, -5, 10, 10); ctx.restore();
                     });
                 } else if (this.type === 'defeat') {
-                    this.ctx.strokeStyle = "rgba(174, 194, 224, 0.5)";
-                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeStyle = "rgba(174, 194, 224, 0.5)"; this.ctx.lineWidth = 2;
                     this.ctx.beginPath();
-                    this.particles.forEach(p => {
-                        this.ctx.moveTo(p.x, p.y);
-                        this.ctx.lineTo(p.x + p.vx, p.y + p.len);
-                    });
+                    this.particles.forEach(p => { this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x + p.vx, p.y + p.len); });
                     this.ctx.stroke();
                 }
             }
@@ -403,7 +374,6 @@
                 this.inputEnabled = false; 
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
-                
                 this.rng = new SeededRNG(123); 
                 this.accumulator = 0;
                 this.reset();
@@ -427,7 +397,7 @@
             reset() {
                 this.units = [];
                 this.projectiles = [];
-                this.particles = [];
+                this.particles = []; 
                 this.spells = []; 
                 this.lastTime = 0;
                 this.accumulator = 0;
@@ -435,12 +405,11 @@
                 this.aiGold = 0;
                 this.dayTime = 0;
                 this.pendingSpawns = []; 
-                fx.stop(); // Stop any effects
+                fx.stop(); 
                 
                 const hp = this.currentModifier.castleHp;
-                // Overdrive Flag
-                this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140, overdrive: false };
-                this.castleRight = { x: CANVAS_WIDTH - 120, hp: hp, maxHp: hp, team: 'guest', fireTimer: 0, w: 80, h: 140, overdrive: false };
+                this.castleLeft = { x: 120, hp: hp, maxHp: hp, team: 'host', fireTimer: 0, w: 80, h: 140 };
+                this.castleRight = { x: CANVAS_WIDTH - 120, hp: hp, maxHp: hp, team: 'guest', fireTimer: 0, w: 80, h: 140 };
                 const dist = this.currentModifier.mineDist;
                 this.mineLeft = { x: dist, y: GROUND_Y, w: 80, h: 60, team: 'host' };
                 this.mineRight = { x: CANVAS_WIDTH - dist, y: GROUND_Y, w: 80, h: 60, team: 'guest' };
@@ -451,6 +420,7 @@
                 document.getElementById('controls-panel').style.display = 'none';
                 document.getElementById('income-container').innerHTML = '';
                 document.getElementById('btn-surrender').style.display = 'none';
+                document.getElementById('lobby-modal').style.display = 'flex';
             }
 
             start() {
@@ -458,15 +428,11 @@
                 this.gold = 200; this.aiGold = 200; 
                 this.inputEnabled = false; 
                 document.getElementById('controls-panel').style.display = 'flex';
+                document.getElementById('lobby-modal').style.display = 'none';
                 this.updateUI(); 
                 this.showStartPopup();
                 
-                // START MUSIC
-                const music = document.getElementById('game-music');
-                if (music) {
-                    music.volume = 0.5;
-                    music.play().catch(e => console.log("Audio autoplay blocked, waiting for interaction"));
-                }
+                audioManager.switch('lobby-music', 'game-music');
 
                 const badge = document.getElementById('modifier-badge');
                 badge.style.display = 'block';
@@ -526,13 +492,11 @@
                 this.frameCount++;
                 
                 if (this.frameCount % 180 === 0) { 
-                    // COMEBACK MECHANIC: EMERGENCY FUNDS
-                    // If Host has < 150g and 0 units, give 3x income
+                    // MECHANIC: EMERGENCY FUNDS & OVERDRIVE
                     const hostUnits = this.units.filter(u => u.team === 'host').length;
                     const hostBoost = (hostUnits === 0 && this.gold < 150); 
                     const hostIncome = hostBoost ? 15 : 5;
                     
-                    // Same for AI/Guest
                     const guestUnits = this.units.filter(u => u.team === 'guest').length;
                     const guestBoost = (guestUnits === 0 && this.aiGold < 150);
                     const guestIncome = guestBoost ? 15 : 5;
@@ -540,7 +504,6 @@
                     this.gold += hostIncome; 
                     this.aiGold += guestIncome; 
                     
-                    // Show popup for boost
                     if(hostBoost && (playerRole === 'host' || this.isSinglePlayer)) {
                         this.showPopupText("BANTUAN DANA!", 200, "#4ade80");
                     }
@@ -557,6 +520,7 @@
                 
                 this.clouds.forEach(c => { c.x -= c.speed; if(c.x < -200) c.x = CANVAS_WIDTH+200; });
                 this.stars.forEach(s => { s.alpha += s.blink; if(s.alpha>1||s.alpha<0.2) s.blink = -s.blink; });
+                if (this.particles.length > 100) this.particles.splice(0, this.particles.length - 100);
                 this.particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life<=0) this.particles.splice(i, 1); });
             }
 
@@ -569,8 +533,7 @@
                     const myMiners = this.units.filter(u => u.team === myTeam && u.type === 'miner').length;
                     const enemyUnits = this.units.filter(u => u.team === enemyTeam && !u.isMiner);
                     let choice = '';
-                    const isDrought = this.currentModifier.name.includes("DROUGHT");
-                    const minerCap = isDrought ? 1 : 2; 
+                    const minerCap = 2; 
                     if (myMiners < minerCap && this.aiGold >= 100) choice = 'miner';
                     else if (enemyUnits.length >= 3 && this.aiGold >= UNITS.wizard.cost) choice = 'wizard'; 
                     else if (enemyUnits.length > 2) { if (this.aiGold >= UNITS.spear.cost) choice = 'spear'; else if (this.aiGold >= UNITS.archer.cost) choice = 'archer'; }
@@ -648,9 +611,7 @@
 
             updateCastleDefense(castle, enemyTeam) {
                 castle.fireTimer++;
-                
-                // --- COMEBACK MECHANIC: CASTLE OVERDRIVE ---
-                // If enemy is close (250px), triple the fire rate
+                // MECHANIC: CASTLE OVERDRIVE
                 let isOverdrive = false;
                 let closestDist = Infinity;
                 let closest = null;
@@ -664,8 +625,8 @@
                 });
 
                 castle.overdrive = isOverdrive;
-                const baseRate = this.currentModifier.towerRate * 2; // Normal 60Hz rate
-                const fireRate = isOverdrive ? 20 : baseRate; // 20 frames = 0.3s (Fast!)
+                const baseRate = this.currentModifier.towerRate * 2; 
+                const fireRate = isOverdrive ? 20 : baseRate; 
                 const range = this.currentModifier.towerRange || 400;
 
                 if (castle.fireTimer >= fireRate && closest && closestDist <= range) { 
@@ -708,7 +669,6 @@
                 const el = document.createElement('div'); 
                 el.className = 'income-text'; el.innerText = text;
                 el.style.color = color;
-                // Convert game X to screen percent roughly
                 const pct = (x / CANVAS_WIDTH) * 100;
                 el.style.left = pct + '%'; el.style.top = '40%';
                 document.getElementById('income-container').appendChild(el); 
@@ -741,6 +701,7 @@
             
             triggerWin(winner) { 
                 this.gameOver = true; 
+                audioManager.stop('game-music');
                 if (this.isSinglePlayer) {
                     this.showEndScreen(winner);
                 } else {
@@ -752,9 +713,7 @@
                 this.gameOver = true; document.getElementById('end-game-screen').style.display = 'flex';
                 document.getElementById('end-title').innerText = (winner === playerRole) ? "VICTORY" : "DEFEAT";
                 document.getElementById('end-title').style.color = (winner === playerRole) ? '#60a5fa' : '#ef4444';
-                // Trigger FX
-                if(winner === playerRole) fx.start('victory');
-                else fx.start('defeat');
+                if(winner === playerRole) fx.start('victory'); else fx.start('defeat');
             }
 
             draw() {
@@ -809,37 +768,25 @@
                 const isOverdrive = castleObj.overdrive;
 
                 ctx.save(); ctx.translate(x, GROUND_Y);
-                // Base - Trapezoid
                 ctx.fillStyle = '#4b5563'; 
                 ctx.beginPath();
-                ctx.moveTo(-50, 0); 
-                ctx.lineTo(-40, -120); 
-                ctx.lineTo(40, -120); 
-                ctx.lineTo(50, 0); 
-                ctx.fill();
+                ctx.moveTo(-50, 0); ctx.lineTo(-40, -120); ctx.lineTo(40, -120); ctx.lineTo(50, 0); ctx.fill();
 
-                // Tower Block
                 ctx.fillStyle = isOverdrive ? '#7f1d1d' : '#374151'; // Red if angry
                 ctx.fillRect(-30, -160, 60, 40);
 
-                // Battlements
                 ctx.fillStyle = '#1f2937';
-                ctx.fillRect(-35, -170, 15, 10);
-                ctx.fillRect(-7, -170, 14, 10);
-                ctx.fillRect(20, -170, 15, 10);
+                ctx.fillRect(-35, -170, 15, 10); ctx.fillRect(-7, -170, 14, 10); ctx.fillRect(20, -170, 15, 10);
 
-                // Team Banner
                 ctx.fillStyle = isHost ? '#2563eb' : '#dc2626'; 
                 ctx.fillRect(-20, -150, 40, 60);
 
-                // Statue Head on Top
                 ctx.fillStyle = '#4b5563';
                 ctx.beginPath(); ctx.arc(0, -200, 30, 0, Math.PI*2); ctx.fill();
                 
-                // Statue Arms/Weapons based on team (Decoration)
                 ctx.strokeStyle = '#374151'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.moveTo(-35, -180); ctx.lineTo(-60, -120); ctx.stroke(); // Left arm
-                ctx.beginPath(); ctx.moveTo(35, -180); ctx.lineTo(60, -120); ctx.stroke(); // Right arm
+                ctx.beginPath(); ctx.moveTo(-35, -180); ctx.lineTo(-60, -120); ctx.stroke(); 
+                ctx.beginPath(); ctx.moveTo(35, -180); ctx.lineTo(60, -120); ctx.stroke(); 
 
                 if (team === playerRole) {
                     ctx.save(); ctx.translate(0, -260); 
@@ -848,10 +795,9 @@
                     ctx.restore();
                 }
 
-                // Archer behind tower
                 ctx.save(); 
-                const archerOffset = isHost ? -20 : 20;
-                ctx.translate(archerOffset, -130); 
+                const archerOffset = isHost ? -30 : 30;
+                ctx.translate(archerOffset, -150); 
                 const dir = isHost ? 1 : -1; ctx.scale(dir, 1);
                 ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI*2); ctx.fill(); 
                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10); ctx.stroke(); 
@@ -865,164 +811,79 @@
             }
 
             drawStickmanNew(u) {
-                // Determine facing direction
                 const myCastle = u.team === 'host' ? this.castleLeft : this.castleRight;
                 const myMine = u.team === 'host' ? this.mineLeft : this.mineRight;
                 
-                let facingDir = u.team === 'host' ? 1 : -1; // Default
-                
-                // FIX: Miner turning body to face castle
+                let facingDir = u.team === 'host' ? 1 : -1; 
                 if (u.type === 'miner' && u.minerState === 'to_castle') {
-                    // If team host (left), castle is at left. So face left (-1).
-                    // If team guest (right), castle is at right. So face right (1).
                     facingDir = u.team === 'host' ? -1 : 1; 
                 }
 
-                const ctx = this.ctx; 
-                const x = u.x; 
-                const y = GROUND_Y;
+                const ctx = this.ctx; const x = u.x; const y = GROUND_Y;
                 const teamColor = u.team === 'host' ? '#3b82f6' : '#ef4444';
-                
                 const showBag = u.type === 'miner' && u.hasGold;
                 const bobY = u.state === 'walk' ? Math.abs(Math.sin(u.animFrame * 2)) * 3 : 0;
                 
-                // Draw everything assuming "Facing Right" (scale handles flip)
                 ctx.save();
                 ctx.translate(x, y);
-                ctx.scale(facingDir, 1); // FLIP CONTEXT HERE
+                ctx.scale(facingDir, 1); 
 
-                // FIX: Wizard Upright
                 const isWizard = u.type === 'wizard';
-                
-                // Relative Coords (x=0 is hip center)
                 const headY = -70 - bobY;
                 const hipY = -45 - bobY;
 
                 ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
 
-                // Legs (Standard right-facing logic)
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2+Math.PI)*0.5:0));
                 this.drawLeg(ctx, 0, hipY, (u.state==='walk'?Math.sin(u.animFrame*2)*0.5:0));
 
-                // Body (Slight Spine Curve for runners, Straight for Wizard)
-                ctx.strokeStyle = '#111'; 
-                ctx.beginPath(); 
-                ctx.moveTo(0, hipY); 
-                if (isWizard) {
-                    ctx.lineTo(0, headY); // Straight spine
-                } else {
-                    ctx.quadraticCurveTo(5, hipY - 20, 2, headY); // Runner hunch
-                }
+                ctx.strokeStyle = '#111'; ctx.beginPath(); ctx.moveTo(0, hipY); 
+                if (isWizard) ctx.lineTo(0, headY); else ctx.quadraticCurveTo(5, hipY - 20, 2, headY); 
                 ctx.stroke();
 
-                if (showBag) { 
-                    ctx.fillStyle = '#facc15'; ctx.strokeStyle='#854d0e'; ctx.lineWidth=1; 
-                    ctx.beginPath(); ctx.rect(-12, hipY - 20, 12, 12); ctx.fill(); ctx.stroke(); 
-                }
-
-                // Arms
+                if (showBag) { ctx.fillStyle = '#facc15'; ctx.strokeStyle='#854d0e'; ctx.lineWidth=1; ctx.beginPath(); ctx.rect(-12, hipY - 20, 12, 12); ctx.fill(); ctx.stroke(); }
                 let armAngle = Math.PI/4;
-                if (u.type === 'wizard') {
-                     // ATTACK FIX: Staff Up/Forward (-45 deg) for summoning
-                     armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
-                }
-                else {
-                    armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
-                }
-
-                // Back Arm
+                if (u.type === 'wizard') armAngle = u.state === 'attack' ? -Math.PI/4 : -Math.PI/2; 
+                else armAngle = u.state === 'attack' ? -Math.PI/2 + (Math.sin(u.animFrame * 3) * 1) : Math.PI/4;
                 this.drawArm(ctx, 0, headY+5, armAngle, u.type, false);
-                // Front Arm
                 this.drawArm(ctx, 0, headY+5, armAngle-0.2, u.type, true);
 
-                // Head
-                ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; 
-                ctx.beginPath(); ctx.arc(isWizard ? 0 : 2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#eee'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(isWizard ? 0 : 2, headY, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                 
-                // Add Wizard Beard
-                if (isWizard) {
-                    ctx.fillStyle = '#eee';
-                    ctx.beginPath(); ctx.moveTo(-5, headY+5); ctx.lineTo(5, headY+5); ctx.lineTo(0, headY+15); ctx.fill();
-                }
+                if (isWizard) { ctx.fillStyle = '#eee'; ctx.beginPath(); ctx.moveTo(-5, headY+5); ctx.lineTo(5, headY+5); ctx.lineTo(0, headY+15); ctx.fill(); }
 
-                // Accessories
-                if (u.type === 'miner') { 
-                    ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(-10, headY-12, 24, 6); ctx.fill(); 
-                    ctx.beginPath(); ctx.rect(-6, headY-18, 16, 8); ctx.fill(); 
-                    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); 
-                }
-                else if (u.type === 'wizard') { 
-                    ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-13, headY-5); ctx.lineTo(17, headY-5); ctx.lineTo(2, headY-35); ctx.fill(); 
-                }
-                else { 
-                    ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); 
-                }
+                if (u.type === 'miner') { ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.rect(-10, headY-12, 24, 6); ctx.fill(); ctx.beginPath(); ctx.rect(-6, headY-18, 16, 8); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(12, headY-14, 3, 0, Math.PI*2); ctx.fill(); }
+                else if (u.type === 'wizard') { ctx.fillStyle = '#3b0764'; ctx.beginPath(); ctx.moveTo(-15, headY-5); ctx.lineTo(15, headY-5); ctx.lineTo(0, headY-35); ctx.fill(); }
+                else { ctx.fillStyle = teamColor; ctx.beginPath(); ctx.arc(2, headY-8, 11, Math.PI, 0); ctx.fill(); }
                 
-                ctx.restore(); // Restore flip
+                ctx.restore(); 
 
-                // HP Bar (Unflipped)
-                ctx.fillStyle = 'red'; ctx.fillRect(x-15, y-100, 30, 4); 
-                ctx.fillStyle = '#0f0'; ctx.fillRect(x-15, y-100, 30*(u.hp/u.stats.hp), 4);
+                ctx.fillStyle = 'red'; ctx.fillRect(x-15, y-100, 30, 4); ctx.fillStyle = '#0f0'; ctx.fillRect(x-15, y-100, 30*(u.hp/u.stats.hp), 4);
             }
 
-            // Simplified DrawLeg (Always assumes facing right)
             drawLeg(ctx, hX, hY, a) {
-                // FIX IDLE LEGS: If 'a' is near 0 (stopped), reduce knee bend drastically
                 const bend = Math.abs(a) < 0.1 ? 0.1 : 0.5;
-                
-                const kX = hX + (Math.sin(a) * 20); 
-                const kY = hY + Math.cos(a) * 20;
-                const fX = kX + (Math.sin(a - bend) * 22); 
-                const fY = kY + Math.cos(a - bend) * 22;
-                ctx.strokeStyle='#000'; ctx.lineWidth=6;
-                ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
+                const kX = hX + (Math.sin(a) * 20); const kY = hY + Math.cos(a) * 20;
+                const fX = kX + (Math.sin(a - bend) * 22); const fY = kY + Math.cos(a - bend) * 22;
+                ctx.strokeStyle='#000'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(hX, hY); ctx.lineTo(kX, kY); ctx.lineTo(fX, fY); ctx.stroke();
             }
             
-            // Simplified DrawArm
             drawArm(ctx, sX, sY, a, type, front) {
                 let fa = a; if(type==='archer') fa = -0.2;
                 if(type==='miner' && !front) return; 
-                
                 const eX = sX + Math.sin(fa)*15; const eY = sY + Math.cos(fa)*15;
                 const hX = eX + Math.sin(fa+0.5)*15; const hY = eY + Math.cos(fa+0.5)*15;
-                
-                ctx.strokeStyle='#000'; ctx.lineWidth=6; 
-                ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.lineTo(hX, hY); ctx.stroke();
-                
+                ctx.strokeStyle='#000'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(eX, eY); ctx.lineTo(hX, hY); ctx.stroke();
                 if (front) {
                     ctx.save(); ctx.translate(hX, hY); 
-                    // Items drawn relative to hand
-                    if (type === 'miner') { 
-                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#a16207'; ctx.fillRect(-2, -20, 4, 30); 
-                        ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.lineTo(0, -10); ctx.fill(); 
-                    }
-                    else if (type === 'wizard') { 
-                        // Staff points forward/up
-                        ctx.rotate(fa - Math.PI/2); 
-                        ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -50, 4, 60); // Longer staff
-                        ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -50, 8, 0, Math.PI*2); ctx.fill(); // Bigger orb
-                    }
-                    else if (type === 'sword') { 
-                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); 
-                        ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); 
-                    }
-                    else if (type === 'spear') { 
-                        // Spear Stab Angle
-                        ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); 
-                        ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); 
-                        
-                        // Shield (Back Hand Only?) No, Front hand holds Spear. 
-                        // Shield should be drawn separately or on back arm. Simplified here.
-                    }
-                    else if (type === 'archer') { 
-                        ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); 
-                        ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); 
-                    }
+                    if (type === 'miner') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#a16207'; ctx.fillRect(-2, -20, 4, 30); ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.moveTo(-6, -20); ctx.lineTo(6, -20); ctx.lineTo(0, -10); ctx.fill(); }
+                    else if (type === 'wizard') { ctx.rotate(fa - Math.PI/2); ctx.fillStyle = '#4a044e'; ctx.fillRect(-2, -50, 4, 60); ctx.fillStyle = '#d8b4fe'; ctx.beginPath(); ctx.arc(0, -50, 8, 0, Math.PI*2); ctx.fill(); }
+                    else if (type === 'sword') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-2, -40, 4, 40); ctx.fillStyle = '#78350f'; ctx.fillRect(-2, 0, 4, 10); }
+                    else if (type === 'spear') { ctx.rotate(fa + Math.PI/2); ctx.fillStyle = '#78350f'; ctx.fillRect(-40, -2, 80, 4); ctx.fillStyle='#94a3b8'; ctx.beginPath(); ctx.moveTo(40,-4); ctx.lineTo(55,0); ctx.lineTo(40,4); ctx.fill(); }
+                    else if (type === 'archer') { ctx.strokeStyle='#78350f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(5,0,20,-Math.PI/2,Math.PI/2); ctx.stroke(); ctx.lineWidth=1; ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(5,-20); ctx.lineTo(5,20); ctx.stroke(); }
                     ctx.restore();
                 } else if (type === 'spear') {
-                    // Shield on Back Arm
-                    ctx.save(); ctx.translate(hX, hY);
-                    ctx.rotate(0.2);
+                    ctx.save(); ctx.translate(hX, hY); ctx.rotate(0.2);
                     ctx.fillStyle = '#b45309'; ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2;
                     ctx.beginPath(); ctx.arc(0, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                     ctx.restore();
@@ -1073,6 +934,10 @@
                 try {
                     await this.authenticate();
                     this.listenToRoomList();
+                    // AUTO PLAY LOBBY MUSIC ON FIRST CLICK
+                    window.addEventListener('click', () => {
+                        audioManager.init();
+                    }, { once: true });
                 } catch (e) { console.error("Auth failed:", e); }
             }
 
@@ -1140,8 +1005,7 @@
 
                 if (confirm("Yakin ingin menyerah?")) {
                     if (game.isSinglePlayer) {
-                        // In SP, player is always host. So enemy is guest.
-                        game.triggerWin('guest');
+                        game.triggerWin('guest'); 
                     } else {
                         const enemy = playerRole === 'host' ? 'guest' : 'host';
                         this.reportWin(enemy);
@@ -1241,12 +1105,17 @@
                 if(this.unsubscribeGame) this.unsubscribeGame(); if(this.unsubscribeCommands) this.unsubscribeCommands();
                 document.getElementById('lobby-modal').style.display = 'flex';
                 document.getElementById('menu-waiting').style.display = 'none'; document.getElementById('menu-start').style.display = 'block';
+                // REPLAY LOBBY MUSIC
+                audioManager.play('lobby-music');
             }
         }
 
         const lobby = new LobbySystem();
         window.lobby = lobby;
         lobby.init(); 
+
+        // FORCE LOBBY VISIBLE ON LOAD
+        document.getElementById('lobby-modal').style.display = 'flex';
 
     </script>
 </body>
